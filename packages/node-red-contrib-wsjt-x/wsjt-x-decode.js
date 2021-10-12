@@ -20,7 +20,7 @@ const stringParser = new binaryParser()
 	.string('string', { length: 'length' });
 
 function stringFormatter(s) {
-	return s.string.replace(/^\s+|\s+$/g, '')
+	return s.string.replace(/^\s+|\s+$/g, '');
 }
 
 function timeFormatter(t) {
@@ -83,11 +83,11 @@ const statusParser = new binaryParser()
 	.uint8('tx_watchdog', { formatter: boolFormatter })
 	.nest('sub_mode', { type: stringParser, formatter: stringFormatter })
 	.uint8('fast_mode', { formatter: boolFormatter })
-	.uint8('special_operation_mode', { formatter: specialOperationModeFormatter})
-	.uint32('frequency_tolerance', {formatter: maxUnit32Formatter})
-	.uint32('tr_period', {formatter: maxUnit32Formatter})
+	.uint8('special_operation_mode', { formatter: specialOperationModeFormatter })
+	.uint32('frequency_tolerance', { formatter: maxUnit32Formatter })
+	.uint32('tr_period', { formatter: maxUnit32Formatter })
 	.nest('configuration_name', { type: stringParser, formatter: stringFormatter })
-	.nest('tx_message', { type: stringParser, formatter: stringFormatter })
+	.nest('tx_message', { type: stringParser, formatter: stringFormatter });
 
 // Out
 const decodeParser = new binaryParser()
@@ -130,14 +130,16 @@ function replyEncoder(message) {
 const dateTimeParser = new binaryParser()
 	.uint64('day')
 	.uint32('time', { formatter: timeFormatter })
-	.uint8('timespec', {formatter: function(t) {
-		switch (t) {
-			case 0: return 'local';
-			case 1: return 'utc';
-			case 2: return 'offset';
-			case 3: return 'timezone';
+	.uint8('timespec', {
+		formatter: function(t) {
+			switch (t) {
+				case 0: return 'local';
+				case 1: return 'utc';
+				case 2: return 'offset';
+				case 3: return 'timezone';
+			}
 		}
-	}})
+	})
 	.choice('time_options', {
 		tag: 'timespec',
 		defaultChoice: nullParser,
@@ -148,23 +150,23 @@ const dateTimeParser = new binaryParser()
 
 // Out
 const qsoLoggedParser = new binaryParser()
-	.nest('date_time_on', {type: dateTimeParser })
+	.nest('date_time_on', { type: dateTimeParser })
 	.nest('dx_call', { type: stringParser, formatter: stringFormatter })
 	.nest('dx_grid', { type: stringParser, formatter: stringFormatter })
 	.uint64('tx_frequency')
-	.nest('mode',  { type: stringParser, formatter: stringFormatter })
-	.nest('report_sent',  { type: stringParser, formatter: numberFormatter })
-	.nest('report_received',  { type: stringParser, formatter: numberFormatter })
-	.nest('tx_power',  { type: stringParser, formatter: numberFormatter })
-	.nest('comments',  { type: stringParser, formatter: stringFormatter })
-	.nest('name',  { type: stringParser, formatter: stringFormatter })
-	.nest('date_time_off', {type: dateTimeParser })
-	.nest('operator_call',  { type: stringParser, formatter: stringFormatter })
-	.nest('my_call',  { type: stringParser, formatter: stringFormatter })
-	.nest('my_grid',  { type: stringParser, formatter: stringFormatter })
-	.nest('exchange_sent',  { type: stringParser, formatter: stringFormatter })
-	.nest('exchange_received',  { type: stringParser, formatter: stringFormatter })
-	.nest('adif_propogation_mode',  { type: stringParser, formatter: stringFormatter })
+	.nest('mode', { type: stringParser, formatter: stringFormatter })
+	.nest('report_sent', { type: stringParser, formatter: numberFormatter })
+	.nest('report_received', { type: stringParser, formatter: numberFormatter })
+	.nest('tx_power', { type: stringParser, formatter: numberFormatter })
+	.nest('comments', { type: stringParser, formatter: stringFormatter })
+	.nest('name', { type: stringParser, formatter: stringFormatter })
+	.nest('date_time_off', { type: dateTimeParser })
+	.nest('operator_call', { type: stringParser, formatter: stringFormatter })
+	.nest('my_call', { type: stringParser, formatter: stringFormatter })
+	.nest('my_grid', { type: stringParser, formatter: stringFormatter })
+	.nest('exchange_sent', { type: stringParser, formatter: stringFormatter })
+	.nest('exchange_received', { type: stringParser, formatter: stringFormatter })
+	.nest('adif_propogation_mode', { type: stringParser, formatter: stringFormatter });
 
 // Out
 const closeParser = new binaryParser();
@@ -219,20 +221,20 @@ const highlightCallsignParser = new binaryParser()
 // In
 const swicthConfigurationParser = new binaryParser()
 	.endianess('big')
-	.nest('configuration_name', { type: stringParser, formatter: stringFormatter })
+	.nest('configuration_name', { type: stringParser, formatter: stringFormatter });
 
 // In
 const configureParser = new binaryParser()
 	.endianess('big')
 	.nest('mode', { type: stringParser, formatter: stringFormatter })
-	.uint32('frequency_tolerance', {formatter: maxUnit32Formatter})
+	.uint32('frequency_tolerance', { formatter: maxUnit32Formatter })
 	.nest('sub_mode', { type: stringParser, formatter: stringFormatter })
 	.uint8('fast_mode', { formatter: boolFormatter })
-	.uint32('tr_period', {formatter: maxUnit32Formatter})
+	.uint32('tr_period', { formatter: maxUnit32Formatter })
 	.uint32('rx_df')
 	.nest('dx_call', { type: stringParser, formatter: stringFormatter })
 	.nest('dx_grid', { type: stringParser, formatter: stringFormatter })
-	.uint8('generate_message', { formatter: boolFormatter })
+	.uint8('generate_message', { formatter: boolFormatter });
 
 // The root parser
 const wsjtxParser = new binaryParser()
@@ -298,7 +300,7 @@ function decode_message(message) {
 	}
 
 	if (!msg) {
-		return { type: 'tx?', dx_call: to, de_call: from };	
+		return { type: 'tx?', dx_call: to, de_call: from };
 	}
 
 	if (msg === '73') {
