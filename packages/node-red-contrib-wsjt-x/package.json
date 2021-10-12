@@ -20,7 +20,8 @@
 		"lint": "npx eslint --fix . || exit 0"
 	},
 	"dependencies": {
-		"binary-parser": "^1.9.2"
+		"binary-parser": "^1.9.2",
+		"binary-parser-encoder": "^1.5.3"
 	},
 	"devDependencies": {
 		"eslint": "^7.32.0",
