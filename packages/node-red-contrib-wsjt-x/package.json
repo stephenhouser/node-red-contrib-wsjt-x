@@ -1,6 +1,6 @@
 {
 	"name": "node-red-contrib-wsjt-x",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "WSJT-X UDP Data Decoding",
 	"keywords": [
 		"node-red",
