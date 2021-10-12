@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+    node-red:
+        image: nodered/node-red:latest-minimal
+        network_mode: "host"
+        environment:
+            - TZ=EST5EDT
+        ports:
+            - "1880:1880/tcp"
+            - "2237:2237/udp"
+            - "9229:9229"
+        volumes:
+            - ./data-linked:/data
+            - ../packages/node-red-contrib-wsjt-x:/data/node_modules/wsjt-x
+        #entrypoint: npm nodered/node-red run debug_brk
+        #entrypoint: "npm run debug_brk -- --userDir /data"
