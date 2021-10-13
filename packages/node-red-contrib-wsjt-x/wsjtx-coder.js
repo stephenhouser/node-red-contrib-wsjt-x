@@ -16,8 +16,8 @@ const nullParser = new binaryParser();
 
 const stringParser = new binaryParser()
 	.uint32('length', {
-		formatter: function(l) {
-			return l === 0xffffffff ? 0 : l;
+		formatter: function(len) {
+			return len === 0xffffffff ? 0 : len;
 		}
 	})
 	.string('string', { length: 'length' });
@@ -47,6 +47,7 @@ const dateTimeParser = new binaryParser()
 		}
 	});
 
+// Time is seconds since midnight UTC
 function timeFormatter(t) {
 	var d = new Date();
 	d.setUTCHours(0, 0, 0, 0);
@@ -54,11 +55,24 @@ function timeFormatter(t) {
 	return d.valueOf();
 }
 
-function specialOperationModeFormatter(mode) {
-	const special_operation_mode = [
+const operation_mode = {
+	none: 0,
+	na_vhf: 1,
+	eu_vhf: 2,
+	field_day: 3,
+	rtty_ru: 4,
+	ww_digi: 5,
+	fox: 6,
+	hound: 7,
+	_names: [
 		'NONE', 'NA VHF', 'EU VHF', 'FIELD DAY', 'RTTY RU', 'WW DIGI', 'FOX', 'HOUND'
-	];
-	return mode < special_operation_mode.length ? special_operation_mode[mode] : 'unknown';
+	],
+	format: function(code) {
+		return (code < this._names.length) ? this._names[code] : 'unknown';
+	},
+	encode: function(key) {
+		return this._names.indexOf(key);
+	}
 }
 
 function boolFormatter(b) {
@@ -66,12 +80,12 @@ function boolFormatter(b) {
 }
 
 function numberFormatter(n) {
-	const intermediate = stringFormatter(n);
-	return isNaN(intermediate) ? intermediate : Number(intermediate);
+	const n_string = stringFormatter(n);
+	return isNaN(n_string) ? n_string : Number(n_string);
 }
 
-function maxUnit32Formatter(v) {
-	return v === 0xffffffff ? null : v;
+function maxUnit32Formatter(value) {
+	return value === 0xffffffff ? null : value;
 }
 
 // (untested)
@@ -110,7 +124,7 @@ const statusParser = new binaryParser()
 	.uint8('tx_watchdog', { formatter: boolFormatter })
 	.nest('sub_mode', { type: stringParser, formatter: stringFormatter })
 	.uint8('fast_mode', { formatter: boolFormatter })
-	.uint8('special_operation_mode', { formatter: specialOperationModeFormatter })
+	.uint8('special_operation_mode', { formatter: operation_mode.format })
 	// since v2.1
 	.uint32('frequency_tolerance', { formatter: maxUnit32Formatter })
 	.uint32('tr_period', { formatter: maxUnit32Formatter })
@@ -138,16 +152,17 @@ const clearParser = new binaryParser()
 	.uint8('window');
 
 function clearEncoder(message) {
-
 }
 
-// function replyModifierFormatter(modifier) {
-// 	const _modifier = [
-// 		'NONE', 'SHIFT', 'CTRL', 'ALT', 'WINDOWS', 'KEYPAD', 'GROUP'
-// 	];
-// 	return 'unknown';
-// }
-
+/* Modifiers
+ * 0x00 - none
+ * 0x02 - shift
+ * 0x04 - ctrl or CMD
+ * 0x08 - ALT
+ * 0x10 - windows key on windows
+ * 0x20 - keypad or arrows
+ * 0x40 - group switch X11 only
+ */
 const modifier_type = {
 	none: 0x00,
 	shift: 0x01,
@@ -156,12 +171,11 @@ const modifier_type = {
 	windows: 0x10,
 	keypad: 0x20,
 	group: 0x40,
-
+	_names: ['none', 'shift', 'alt', 'windows', 'keypad', 'group'],
 	format: function(modifiers) {
-
+		return modifiers;
 	},
 	encode: function(modifiers) {
-
 	}
 }
 
@@ -175,19 +189,9 @@ const replyParser = new binaryParser()
 	.nest('mode', { type: stringParser, formatter: stringFormatter })
 	.nest('message', { type: stringParser, formatter: stringFormatter })
 	.uint8('low_confidence')
-	.uint8('modifiers');
-/* Modifiers
- * 0x00 - none
- * 0x02 - shift
- * 0x04 - ctrl or CMD
- * 0x08 - ALT
- * 0x10 - windows key on windows
- * 0x20 - keypad or arrows
- * 0x40 - group switch X11 only
- */
+	.uint8('modifiers', { format: modifier_type.format });
 
 function replyEncoder(message) {
-
 }
 
 // Out since v2.0
@@ -296,21 +300,14 @@ const message_type = {
 	highlight_callsign: 13,
 	switch_configuration: 14,
 	configure: 15,
-
 	_names: [
 		'heartbeat', 'status', 'decode', 'clear', 'reply', 'qso-logged',
 		'close', 'replay', 'halt-tx', 'free-text', 'wspr-decode', 'location',
 		'logged-adif', 'highlight-callsign', 'switch-configuration', 'configure'
 	],
-
 	format: function(code) {
-		if (code < this._names.length) {
-			return this._names[code]
-		}
-
-		return 'unknown';
+		return (code < this._names.length) ? this._names[code] : 'unknown';
 	},
-
 	encode: function(key) {
 		return this._names.indexOf(key);
 	}
