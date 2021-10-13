@@ -2,7 +2,7 @@
 
 A simple node to handle the decoding of WSJT-X data in NodeRed.
 
-![Example NodeRed Flow](wsjtx-decoder.png)
+![Example NodeRed Flow](wsjtx-decode.png)
 
 To best utilize this node in your flow while still being able to use other
 programs (like GridTracker) you should configure WSJT-X's Reporting, UDP Server
