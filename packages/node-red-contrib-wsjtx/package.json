@@ -1,18 +1,19 @@
 {
-	"name": "node-red-contrib-wsjt-x",
+	"name": "node-red-contrib-wsjtx",
 	"version": "0.1.1",
-	"description": "WSJT-X UDP Data Decoding",
+	"description": "WSJTX UDP Data Decoding",
 	"keywords": [
 		"node-red",
 		"wsjt-x",
+		"wsjtx",
 		"radio"
 	],
 	"author": "Stephen Houser, N1SH <stephenhouser@gmail.com>",
-	"repository": "github:stephenhouser/node-red-contrib-wsjt-x",
+	"repository": "github:stephenhouser/node-red-contrib-wsjtx",
 	"license": "MIT",
-	"homepage": "https://github.com/stephenhouser/node-red-contrib-wsjt-x",
+	"homepage": "https://github.com/stephenhouser/node-red-contrib-wsjtx",
 	"bugs": {
-		"url": "https://github.com/stephenhouser/node-red-contrib-wsjt-x/issues"
+		"url": "https://github.com/stephenhouser/node-red-contrib-wsjtx/issues"
 	},
 	"main": "index.js",
 	"scripts": {

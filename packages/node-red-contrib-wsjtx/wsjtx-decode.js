@@ -1,4 +1,4 @@
-/* wsjtx-decode.js - NodeRed node for decoding WSJT-X messages
+/* wsjtx-decode.js - NodeRed node for decoding WSJTX messages
  *
  * An out of date reference. 
  * https://github.com/roelandjansen/wsjt-x/blob/master/NetworkMessage.hpp

@@ -1,10 +1,10 @@
 {
-	"name": "node-red-contrib-wsjt-x-meta",
+	"name": "node-red-contrib-wsjtx-meta",
 	"private": true,
 	"workspaces": [
 	  "packages/*"
 	],
-	"description": "This repository provides a [NodeRed](https://nodered.org) node to decode WSJT-X UDP notifications",
+	"description": "This repository provides a [NodeRed](https://nodered.org) node to decode WSJTX UDP notifications",
 	"version": "0.1.0",
 	"main": "index.js",
 	"scripts": {
@@ -15,19 +15,19 @@
 	},
 	"repository": {
 	  "type": "git",
-	  "url": "git+https://github.com/stephenhouser/node-red-contrib-wsjt-x.git"
+	  "url": "git+https://github.com/stephenhouser/node-red-contrib-wsjtx.git"
 	},
 	"keywords": [
 	  "node-red",
-	  "wsjt-x",
+	  "wsjt-x", "wsjtx",
 	  "radio"
 	],
 	"author": "Stephen Houser",
 	"license": "MIT",
 	"bugs": {
-	  "url": "https://github.com/stephenhouser/node-red-contrib-wsjt-x/issues"
+	  "url": "https://github.com/stephenhouser/node-red-contrib-wsjtx/issues"
 	},
-	"homepage": "https://github.com/stephenhouser/node-red-contrib-wsjt-x.#readme",
+	"homepage": "https://github.com/stephenhouser/node-red-contrib-wsjtx.#readme",
 	"devDependencies": {
 	  "lerna": "^4.0.0"
 	}
