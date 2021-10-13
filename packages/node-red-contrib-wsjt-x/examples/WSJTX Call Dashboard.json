@@ -1,0 +1,401 @@
+[
+    {
+        "id": "945e22923708a43f",
+        "type": "tab",
+        "label": "WSJT-X Call Dashboard",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "f2bc5908e7ffdbed",
+        "type": "inject",
+        "z": "945e22923708a43f",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "10",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payloadType": "date",
+        "x": 130,
+        "y": 340,
+        "wires": [
+            [
+                "886cda80d593aa05"
+            ]
+        ]
+    },
+    {
+        "id": "886cda80d593aa05",
+        "type": "function",
+        "z": "945e22923708a43f",
+        "name": "Expire QSOs",
+        "func": "const time_to_live = 60 * 5 * 1000; // 5 minutes\n\nconst qso_list = flow.get('qso') || {};\nconst now = new Date();\nconst new_qso_list = {};\nObject.keys(qso_list).forEach(function(call) {\n    let qso = qso_list[call];\n    if (now - qso.timestamp <= time_to_live) {\n        new_qso_list[call] = qso;\n    }\n});\nflow.set('qso', new_qso_list);\nreturn new_qso_list;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 310,
+        "y": 340,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "219031d3005eccd5",
+        "type": "change",
+        "z": "945e22923708a43f",
+        "name": "Clear flow.qso List",
+        "rules": [
+            {
+                "t": "set",
+                "p": "qso",
+                "pt": "flow",
+                "to": "{}",
+                "tot": "json"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 310,
+        "y": 440,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "375a9bc44c12d58c",
+        "type": "inject",
+        "z": "945e22923708a43f",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 120,
+        "y": 440,
+        "wires": [
+            [
+                "219031d3005eccd5"
+            ]
+        ]
+    },
+    {
+        "id": "c8af04d2dfbbd179",
+        "type": "udp in",
+        "z": "945e22923708a43f",
+        "name": "",
+        "iface": "",
+        "port": "2237",
+        "ipv": "udp4",
+        "multicast": "true",
+        "group": "224.0.0.1",
+        "datatype": "buffer",
+        "x": 130,
+        "y": 80,
+        "wires": [
+            [
+                "c4569291aea7db3b"
+            ]
+        ]
+    },
+    {
+        "id": "c4569291aea7db3b",
+        "type": "wsjtx-decode",
+        "z": "945e22923708a43f",
+        "name": "",
+        "x": 320,
+        "y": 80,
+        "wires": [
+            [
+                "a19abbb8a816ed01"
+            ]
+        ]
+    },
+    {
+        "id": "fd85e206f667dc34",
+        "type": "ui_table",
+        "z": "945e22923708a43f",
+        "group": "f9bd40032d4a30d1",
+        "name": "",
+        "order": 1,
+        "width": "24",
+        "height": "10",
+        "columns": [
+            {
+                "field": "time",
+                "title": "Time",
+                "width": "",
+                "align": "center",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "call",
+                "title": "Call",
+                "width": "",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "grid",
+                "title": "Grid",
+                "width": "",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "message",
+                "title": "Exchange",
+                "width": "",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            }
+        ],
+        "outputs": 0,
+        "cts": false,
+        "x": 590,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "3e82b0ac011e5546",
+        "type": "function",
+        "z": "945e22923708a43f",
+        "name": "cq's from flow.qso to table data",
+        "func": "if (msg.topic === 'decode') {\n    const qso_list = flow.get('qso') || {};\n    const table_data = [];\n    Object.keys(qso_list).forEach(function(call) {\n        let qso = qso_list[call];\n        if (qso.hasOwnProperty('message_decode') && qso.message_decode.hasOwnProperty('type')) {\n            if (qso.message_decode.type === 'cq') {\n                table_data.push({\n                    call: call,\n                    time: qso.time,\n                    grid: qso.message_decode.de_grid,\n                    message: qso.message\n                });\n            }\n        }\n    });\n\n    return { payload: table_data };\n}\n\nreturn null;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 350,
+        "y": 180,
+        "wires": [
+            [
+                "fd85e206f667dc34"
+            ]
+        ]
+    },
+    {
+        "id": "42c5fe307f4e52e5",
+        "type": "function",
+        "z": "945e22923708a43f",
+        "name": "qso's from flow.qso to table data",
+        "func": "if (msg.topic === 'decode') {\n    const qso_list = flow.get('qso') || {};\n    const table_data = [];\n    Object.keys(qso_list).forEach(function(call) {\n        let qso = qso_list[call];\n        table_data.push(qso);\n    });\n    \n    return { payload: table_data };\n}\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 360,
+        "y": 240,
+        "wires": [
+            [
+                "1cefa1c008c9a239"
+            ]
+        ]
+    },
+    {
+        "id": "1cefa1c008c9a239",
+        "type": "ui_table",
+        "z": "945e22923708a43f",
+        "group": "f9bd40032d4a30d1",
+        "name": "",
+        "order": 1,
+        "width": "24",
+        "height": "10",
+        "columns": [
+            {
+                "field": "time",
+                "title": "Time",
+                "width": "",
+                "align": "center",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "message",
+                "title": "Exchange",
+                "width": "",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "message_decode.type",
+                "title": "Type",
+                "width": "",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "message_decode.de_call",
+                "title": "DE Call",
+                "width": "",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "message_decode.dx_call",
+                "title": "DX Call",
+                "width": "",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "message_decode.snr",
+                "title": "SNR",
+                "width": "",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "message_decode.de_grid",
+                "title": "Grid",
+                "width": "",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "message_decode.message",
+                "title": "Message",
+                "width": "",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            }
+        ],
+        "outputs": 0,
+        "cts": false,
+        "x": 590,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "a19abbb8a816ed01",
+        "type": "function",
+        "z": "945e22923708a43f",
+        "name": "Save QSOs in flow.qso",
+        "func": "if (msg.topic === 'decode') {\n    const qso_list = flow.get('qso') || {};\n    \n    const dtime = new Date(msg.payload.time)\n    const time = dtime.toISOString().slice(11,19);\n    const de_call = msg.payload.message_decode.de_call;\n    qso_list[de_call] = {\n        timestamp: dtime,\n        time: time,\n        message: msg.payload.message,\n        message_decode: msg.payload.message_decode\n    }\n    delete qso_list['_msgid'];\n    flow.set('qso', qso_list);\n}\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 520,
+        "y": 80,
+        "wires": [
+            [
+                "42c5fe307f4e52e5",
+                "3e82b0ac011e5546"
+            ]
+        ]
+    },
+    {
+        "id": "11b783872343c827",
+        "type": "comment",
+        "z": "945e22923708a43f",
+        "name": "Expire old QSO's from flow.qso",
+        "info": "",
+        "x": 150,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "a805859303528831",
+        "type": "comment",
+        "z": "945e22923708a43f",
+        "name": "Show saved decode messages in tables",
+        "info": "",
+        "x": 180,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "c28bc792becb08a4",
+        "type": "comment",
+        "z": "945e22923708a43f",
+        "name": "Manually clear flow.qso",
+        "info": "",
+        "x": 120,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "f9bd40032d4a30d1",
+        "type": "ui_group",
+        "name": "WSJT-X Activity",
+        "tab": "11bd0a2fc83eb5fb",
+        "order": 1,
+        "disp": true,
+        "width": "24",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "11bd0a2fc83eb5fb",
+        "type": "ui_tab",
+        "name": "WSJT-X",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    }
+]

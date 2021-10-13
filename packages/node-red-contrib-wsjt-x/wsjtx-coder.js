@@ -68,10 +68,10 @@ const operation_mode = {
 		'NONE', 'NA VHF', 'EU VHF', 'FIELD DAY', 'RTTY RU', 'WW DIGI', 'FOX', 'HOUND'
 	],
 	format: function(code) {
-		return (code < this._names.length) ? this._names[code] : 'unknown';
+		return (code < operation_mode._names.length) ? operation_mode._names[code] : 'unknown';
 	},
 	encode: function(key) {
-		return this._names.indexOf(key);
+		return operation_mode._names.indexOf(key);
 	}
 }
 
@@ -149,7 +149,8 @@ const decodeParser = new binaryParser()
 const clearParser = new binaryParser()
 	.endianess('big')
 	// since v2.1
-	.uint8('window');
+	// Not sent from WSJT-X
+	// .uint8('window');
 
 function clearEncoder(message) {
 }
@@ -306,10 +307,10 @@ const message_type = {
 		'logged-adif', 'highlight-callsign', 'switch-configuration', 'configure'
 	],
 	format: function(code) {
-		return (code < this._names.length) ? this._names[code] : 'unknown';
+		return (code < message_type._names.length) ? message_type._names[code] : 'unknown';
 	},
 	encode: function(key) {
-		return this._names.indexOf(key);
+		return message_type._names.indexOf(key);
 	}
 };
 

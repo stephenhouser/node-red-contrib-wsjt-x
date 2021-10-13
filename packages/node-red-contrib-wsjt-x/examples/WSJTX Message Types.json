@@ -1,0 +1,330 @@
+[
+    {
+        "id": "767fd6117e976096",
+        "type": "tab",
+        "label": "WSJT-X Message Types",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "d8f0361cbd9e56c1",
+        "type": "udp in",
+        "z": "767fd6117e976096",
+        "name": "",
+        "iface": "",
+        "port": "2237",
+        "ipv": "udp4",
+        "multicast": "true",
+        "group": "224.0.0.1",
+        "datatype": "buffer",
+        "x": 130,
+        "y": 80,
+        "wires": [
+            [
+                "014c1626f42132c2"
+            ]
+        ]
+    },
+    {
+        "id": "0279c9015319b82f",
+        "type": "switch",
+        "z": "767fd6117e976096",
+        "name": "",
+        "property": "topic",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "heartbeat",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "status",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "decode",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "clear",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "qso-logged",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "close",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "wspr-decode",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "logged-adif",
+                "vt": "str"
+            },
+            {
+                "t": "else"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 9,
+        "x": 330,
+        "y": 280,
+        "wires": [
+            [
+                "bd929024d2638706"
+            ],
+            [
+                "119dba94e0d8e727"
+            ],
+            [
+                "6f9da7aae1951a3e"
+            ],
+            [
+                "14b29cec51ca8d17"
+            ],
+            [
+                "c38484db9431968d"
+            ],
+            [
+                "32535407664ab502"
+            ],
+            [
+                "43ffabd6b6096bf1"
+            ],
+            [
+                "3b531a56360cfb0f"
+            ],
+            [
+                "f50228bc3d012d39"
+            ]
+        ]
+    },
+    {
+        "id": "014c1626f42132c2",
+        "type": "wsjtx-decode",
+        "z": "767fd6117e976096",
+        "name": "",
+        "x": 320,
+        "y": 80,
+        "wires": [
+            [
+                "630e5e289971ca0a"
+            ]
+        ]
+    },
+    {
+        "id": "bd929024d2638706",
+        "type": "function",
+        "z": "767fd6117e976096",
+        "name": "heartbeat",
+        "func": "let count = flow.get(msg.topic) || 0;\nnode.status({fill:'green', shape:'dot', text: `${msg.topic}=${count}`});\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 580,
+        "y": 80,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "630e5e289971ca0a",
+        "type": "function",
+        "z": "767fd6117e976096",
+        "name": "Save Counts",
+        "func": "const type = msg.topic;\nlet count = flow.get(type) || 0;\nflow.set(type, ++count);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 190,
+        "y": 280,
+        "wires": [
+            [
+                "0279c9015319b82f"
+            ]
+        ]
+    },
+    {
+        "id": "6f9da7aae1951a3e",
+        "type": "function",
+        "z": "767fd6117e976096",
+        "name": "decode",
+        "func": "let count = flow.get(msg.topic) || 0;\nnode.status({fill:'green', shape:'dot', text: `${msg.topic}=${count}`});\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 580,
+        "y": 200,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "14b29cec51ca8d17",
+        "type": "function",
+        "z": "767fd6117e976096",
+        "name": "clear",
+        "func": "let count = flow.get(msg.topic) || 0;\nnode.status({fill:'green', shape:'dot', text: `${msg.topic}=${count}`});\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 570,
+        "y": 260,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "119dba94e0d8e727",
+        "type": "function",
+        "z": "767fd6117e976096",
+        "name": "status",
+        "func": "let count = flow.get(msg.topic) || 0;\nnode.status({fill:'green', shape:'dot', text: `${msg.topic}=${count}`});\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 570,
+        "y": 140,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "c38484db9431968d",
+        "type": "function",
+        "z": "767fd6117e976096",
+        "name": "qsl-logged",
+        "func": "let count = flow.get(msg.topic) || 0;\nnode.status({fill:'green', shape:'dot', text: `${msg.topic}=${count}`});\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 590,
+        "y": 320,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "32535407664ab502",
+        "type": "function",
+        "z": "767fd6117e976096",
+        "name": "close",
+        "func": "let count = flow.get(msg.topic) || 0;\nnode.status({fill:'green', shape:'dot', text: `${msg.topic}=${count}`});\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 570,
+        "y": 380,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "43ffabd6b6096bf1",
+        "type": "function",
+        "z": "767fd6117e976096",
+        "name": "wspr-decode",
+        "func": "let count = flow.get(msg.topic) || 0;\nnode.status({fill:'green', shape:'dot', text: `${msg.topic}=${count}`});\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 590,
+        "y": 440,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "3b531a56360cfb0f",
+        "type": "function",
+        "z": "767fd6117e976096",
+        "name": "logged-adif",
+        "func": "let count = flow.get(msg.topic) || 0;\nnode.status({fill:'green', shape:'dot', text: `${msg.topic}=${count}`});\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 590,
+        "y": 500,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "ddfa6770b08c1bf7",
+        "type": "comment",
+        "z": "767fd6117e976096",
+        "name": "Show count of each message type",
+        "info": "",
+        "x": 560,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "f50228bc3d012d39",
+        "type": "debug",
+        "z": "767fd6117e976096",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 570,
+        "y": 560,
+        "wires": []
+    },
+    {
+        "id": "a13668de14b60b07",
+        "type": "comment",
+        "z": "767fd6117e976096",
+        "name": "Decode incoming WSJT-X",
+        "info": "",
+        "x": 130,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "1f76e1a485fc803a",
+        "type": "comment",
+        "z": "767fd6117e976096",
+        "name": "Save counts of each type",
+        "info": "",
+        "x": 150,
+        "y": 240,
+        "wires": []
+    }
+]
