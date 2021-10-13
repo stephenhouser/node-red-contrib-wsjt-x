@@ -1,0 +1,22 @@
+<script type="text/javascript">
+    RED.nodes.registerType('wsjtx-decode', {
+        category: 'wsjt-x',
+        color: '#06bcd8',
+        defaults: {
+            name: { value: '' }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: 'font-awesome/fa-server',
+        label: function() {
+            return this.name || 'wsjtx-decode';
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="wsjtx-decode">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
