@@ -306,32 +306,36 @@ function decode_message_type(type) {
 }
 
 function decode_message(message) {
-	const [to, from, msg] = message.split(' ');
-	if (to === 'CQ') {
-		return { type: 'cq', de_call: from, de_grid: msg };
+	const exchange = message.split(' ');
+	if (exchange[0] === 'CQ') {
+		if (exchange.length == 4) {
+			return { type: 'cq', dx_call: exchange[1], de_call: exchange[2], de_grid: exchange[3] };
+		} else {
+			return { type: 'cq', de_call: exchange[1], de_grid: exchange[2] };
+		}
 	}
 
-	if (!msg) {
-		return { type: 'tx?', dx_call: to, de_call: from };
+	if (exchange.length <= 2) {
+		return { type: 'tx?', dx_call: exchange[0], de_call: exchange[1] };
 	}
 
-	if (msg === '73') {
-		return { type: 'tx5', dx_call: to, de_call: from, message: msg };
+	if (exchange[2] === '73') {
+		return { type: 'tx5', dx_call: exchange[0], de_call: exchange[1], message: exchange[2] };
 	}
 
-	if (msg === 'RR73' || msg === 'RRR') {
-		return { type: 'tx4', dx: to, de: from, message: msg };
+	if (exchange[2] === 'RR73' || exchange[2] === 'RRR') {
+		return { type: 'tx4', dx_call: exchange[0], de_call: exchange[1], message: exchange[2] };
 	}
 
-	if (msg.startsWith('+') || msg.startsWith('-')) {
-		return { type: 'tx2', dx_call: to, de_call: from, snr: parseInt(msg) };
+	if (exchange[2].startsWith('+') || exchange[2].startsWith('-')) {
+		return { type: 'tx2', dx_call: exchange[0], de_call: exchange[1], snr: parseInt(exchange[2]) };
 	}
 
-	if (msg.startsWith('R')) {
-		return { type: 'tx3', dx_call: to, de_call: from, snr: parseInt(msg.slice(1)) };
+	if (exchange[2].startsWith('R')) {
+		return { type: 'tx3', dx_call: exchange[0], de_call: exchange[1], snr: parseInt(exchange[2].slice(1)) };
 	}
 
-	return { type: 'tx1', dx_call: to, de_call: from, de_grid: msg };
+	return { type: 'tx1', dx_call: exchange[0], de_call: exchange[1], de_grid: exchange[2] };
 }
 
 function decode(buffer) {
