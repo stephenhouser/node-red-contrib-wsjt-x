@@ -33,7 +33,7 @@
 	},
 	"node-red": {
 		"nodes": {
-			"wsjt-x-decode": "wsjt-x-decode.js"
+			"wsjtx-decode": "wsjtx-decode.js"
 		}
 	}
 }
