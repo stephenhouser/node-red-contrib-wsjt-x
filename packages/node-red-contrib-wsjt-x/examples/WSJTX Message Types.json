@@ -114,7 +114,7 @@
     },
     {
         "id": "014c1626f42132c2",
-        "type": "wsjtx-decode",
+        "type": "wsjt-x-decode",
         "z": "767fd6117e976096",
         "name": "",
         "x": 320,

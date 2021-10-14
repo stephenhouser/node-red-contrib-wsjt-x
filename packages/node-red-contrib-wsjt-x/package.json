@@ -1,19 +1,18 @@
 {
-	"name": "node-red-contrib-wsjtx",
+	"name": "node-red-contrib-wsjt-x",
 	"version": "0.1.1",
-	"description": "WSJTX UDP Data Decoding",
+	"description": "WSJT-X UDP Data Decoding",
 	"keywords": [
 		"node-red",
-		"wsjt-x",
-		"wsjtx",
+		"wsjt-x", "wsjtx",
 		"radio"
 	],
 	"author": "Stephen Houser, N1SH <stephenhouser@gmail.com>",
-	"repository": "github:stephenhouser/node-red-contrib-wsjtx",
+	"repository": "github:stephenhouser/node-red-contrib-wsjt-x",
 	"license": "MIT",
-	"homepage": "https://github.com/stephenhouser/node-red-contrib-wsjtx",
+	"homepage": "https://github.com/stephenhouser/node-red-contrib-wsjt-x",
 	"bugs": {
-		"url": "https://github.com/stephenhouser/node-red-contrib-wsjtx/issues"
+		"url": "https://github.com/stephenhouser/node-red-contrib-wsjt-x/issues"
 	},
 	"main": "index.js",
 	"scripts": {
@@ -29,12 +28,11 @@
 		"eslint-config-standard": "^16.0.3",
 		"eslint-plugin-import": "^2.24.2",
 		"eslint-plugin-node": "^11.1.0",
-		"eslint-plugin-promise": "^5.1.0",
-		"pcap": "github:node-pcap/node_pcap"
+		"eslint-plugin-promise": "^5.1.0"
 	},
 	"node-red": {
 		"nodes": {
-			"wsjtx-decode": "wsjtx-decode.js"
+			"wsjt-x-decode": "wsjt-x-decode.js"
 		}
 	}
 }

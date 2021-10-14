@@ -2,7 +2,7 @@
     {
         "id": "945e22923708a43f",
         "type": "tab",
-        "label": "WSJTX Call Dashboard",
+        "label": "WSJT-X Call Dashboard",
         "disabled": false,
         "info": ""
     },
@@ -126,7 +126,7 @@
     },
     {
         "id": "c4569291aea7db3b",
-        "type": "wsjtx-decode",
+        "type": "wsjt-x-decode",
         "z": "945e22923708a43f",
         "name": "",
         "x": 320,
