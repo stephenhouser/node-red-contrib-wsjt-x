@@ -2,7 +2,7 @@
     {
         "id": "a59ea6503785db5d",
         "type": "tab",
-        "label": "Track WSJTX Instances",
+        "label": "Track WSJT-X Instances",
         "disabled": false,
         "info": ""
     },
@@ -234,6 +234,84 @@
         "info": "",
         "x": 220,
         "y": 340,
+        "wires": []
+    },
+    {
+        "id": "04ed5ffa6e3df03c",
+        "type": "change",
+        "z": "a59ea6503785db5d",
+        "name": "Get named Instance Details",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "$flowContext(\"wsjtx[\\\"\" & msg.payload & \"\\\"]\")",
+                "tot": "jsonata"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 320,
+        "y": 480,
+        "wires": [
+            [
+                "d3d3d9289c7fce8a"
+            ]
+        ]
+    },
+    {
+        "id": "d3d3d9289c7fce8a",
+        "type": "debug",
+        "z": "a59ea6503785db5d",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 540,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "2e036f37ac3dbd1b",
+        "type": "inject",
+        "z": "a59ea6503785db5d",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "WSJT-X",
+        "payloadType": "str",
+        "x": 130,
+        "y": 480,
+        "wires": [
+            [
+                "04ed5ffa6e3df03c"
+            ]
+        ]
+    },
+    {
+        "id": "a761df8c5653e6f3",
+        "type": "comment",
+        "z": "a59ea6503785db5d",
+        "name": "Get the details of the instance given in msg.payload",
+        "info": "",
+        "x": 230,
+        "y": 440,
         "wires": []
     }
 ]
