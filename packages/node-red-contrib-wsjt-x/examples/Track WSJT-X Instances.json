@@ -1,0 +1,239 @@
+[
+    {
+        "id": "a59ea6503785db5d",
+        "type": "tab",
+        "label": "Track WSJTX Instances",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "2fd67336e3acb5b7",
+        "type": "wsjt-x-decode",
+        "z": "a59ea6503785db5d",
+        "name": "",
+        "x": 320,
+        "y": 140,
+        "wires": [
+            [
+                "591bd212f42259f6"
+            ]
+        ]
+    },
+    {
+        "id": "377126e27e0c2679",
+        "type": "udp in",
+        "z": "a59ea6503785db5d",
+        "name": "",
+        "iface": "",
+        "port": "2237",
+        "ipv": "udp4",
+        "multicast": "true",
+        "group": "224.0.0.1",
+        "datatype": "buffer",
+        "x": 130,
+        "y": 140,
+        "wires": [
+            [
+                "2fd67336e3acb5b7"
+            ]
+        ]
+    },
+    {
+        "id": "2a6d348cb39c8f68",
+        "type": "debug",
+        "z": "a59ea6503785db5d",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 690,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "591bd212f42259f6",
+        "type": "function",
+        "z": "a59ea6503785db5d",
+        "name": "Track Instances",
+        "func": "const instances = flow.get('wsjtx') || {};\n\nif (msg.topic === 'status') {\n    instances[msg.payload.id] = msg.payload\n} else if (msg.topic === 'close') {\n    delete instances[msg.payload.id];\n}\n\nflow.set('wsjtx', instances);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 520,
+        "y": 140,
+        "wires": [
+            [
+                "2a6d348cb39c8f68"
+            ]
+        ]
+    },
+    {
+        "id": "34b6451e2665fdfc",
+        "type": "inject",
+        "z": "a59ea6503785db5d",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 140,
+        "y": 380,
+        "wires": [
+            [
+                "376e8b6776253e90"
+            ]
+        ]
+    },
+    {
+        "id": "fe431e80153e2c1e",
+        "type": "debug",
+        "z": "a59ea6503785db5d",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 550,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "dda6164af781319d",
+        "type": "inject",
+        "z": "a59ea6503785db5d",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "status",
+        "payload": "{\"id\": \"NodeRed\"}",
+        "payloadType": "json",
+        "x": 230,
+        "y": 240,
+        "wires": [
+            [
+                "591bd212f42259f6"
+            ]
+        ]
+    },
+    {
+        "id": "376e8b6776253e90",
+        "type": "function",
+        "z": "a59ea6503785db5d",
+        "name": "Get Instance Names",
+        "func": "msg.payload = Object.keys(flow.get('wsjtx'))\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 330,
+        "y": 380,
+        "wires": [
+            [
+                "fe431e80153e2c1e"
+            ]
+        ]
+    },
+    {
+        "id": "5ced0786848517b6",
+        "type": "inject",
+        "z": "a59ea6503785db5d",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "close",
+        "payload": "{\"id\": \"NodeRed\"}",
+        "payloadType": "json",
+        "x": 220,
+        "y": 280,
+        "wires": [
+            [
+                "591bd212f42259f6"
+            ]
+        ]
+    },
+    {
+        "id": "3385523276eb8635",
+        "type": "comment",
+        "z": "a59ea6503785db5d",
+        "name": "Update flow.wsjtx with status and close messages",
+        "info": "",
+        "x": 230,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "08f1067f19fc11a0",
+        "type": "comment",
+        "z": "a59ea6503785db5d",
+        "name": "Track details about multiple instances of WSJT-X",
+        "info": "",
+        "x": 200,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "9d2c0e3d86a6ef40",
+        "type": "comment",
+        "z": "a59ea6503785db5d",
+        "name": "Sample \"fake\" instances to test with",
+        "info": "",
+        "x": 220,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "c4564728d4438a50",
+        "type": "comment",
+        "z": "a59ea6503785db5d",
+        "name": "Get list of WSJT-X Instance names/ids for display",
+        "info": "",
+        "x": 220,
+        "y": 340,
+        "wires": []
+    }
+]
