@@ -1,5 +1,5 @@
 <script type="text/html" data-help-name="wsjt-x-decode">
-    <p>Decodes WSJT-X UDP messages and outputs them into the flow.</p>
+    <p>Decodes messages from the <a href="https://www.physics.princeton.edu/pulsar/k1jt/wsjtx.html">WSJT-X</a> communication program and outputs them into the flow. This node is designed to have it's input connected to a UDP In node which collects the messages from WSJT-X over the local network.</p>
 
     <h3>Inputs</h3>
     <dl class="message-properties">
@@ -10,6 +10,6 @@
     <h3>Outputs</h3>
     <dl class="message-properties">
         <dt>payload <span class="property-type">Object</span></dt>
-            <dd>The JSON decoded data from the WSJT-X datagram.</dd>
+            <dd>The JSON decoded data from the WSJT-X datagram. The <code>topic</code> will be the message type (heartbeat, status, decode, etc.) and the <code>payload</code> will contain the decoded fields for that message type.</dd>
      </dl>
 </script>

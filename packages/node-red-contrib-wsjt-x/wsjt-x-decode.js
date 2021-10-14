@@ -28,7 +28,7 @@ module.exports = function(RED) {
 
 				send(message);
 			}
-			
+
 			if (done) {
 				done();
 			}

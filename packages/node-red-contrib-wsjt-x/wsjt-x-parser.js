@@ -73,7 +73,7 @@ const operation_mode = {
 	encode: function(key) {
 		return operation_mode._names.indexOf(key);
 	}
-}
+};
 
 function boolFormatter(b) {
 	return b === 1;
@@ -147,10 +147,10 @@ const decodeParser = new binaryParser()
 
 // Out/In since v2.0
 const clearParser = new binaryParser()
-	.endianess('big')
-	// since v2.1
-	// Not sent from WSJTX
-	// .uint8('window');
+	.endianess('big');
+// since v2.1
+// Not sent from WSJTX
+// .uint8('window');
 
 function clearEncoder(message) {
 }
@@ -178,7 +178,7 @@ const modifier_type = {
 	},
 	encode: function(modifiers) {
 	}
-}
+};
 
 // In  (untested) since v2.0
 const replyParser = new binaryParser()

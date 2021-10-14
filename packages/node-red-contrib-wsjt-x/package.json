@@ -1,12 +1,17 @@
 {
 	"name": "node-red-contrib-wsjt-x",
 	"version": "0.2.0",
-	"description": "WSJT-X UDP Data Decoding",
+	"description": "WSJT-X Data Decoding",
 	"keywords": [
 		"node-red",
 		"wsjt-x",
 		"wsjtx",
-		"radio"
+		"ft8",
+		"ft4",
+		"wspr",
+		"radio",
+		"ham radio",
+		"amatuer radio"
 	],
 	"author": "Stephen Houser, N1SH <stephenhouser@gmail.com>",
 	"repository": "github:stephenhouser/node-red-contrib-wsjt-x",
