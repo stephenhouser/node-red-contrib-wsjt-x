@@ -23,7 +23,8 @@ module.exports = function(RED) {
 			if (decoded && send) {
 				const message = {
 					topic: decoded.type,
-					payload: decoded
+					payload: decoded,
+					input: msg.payload
 				};
 
 				send(message);
