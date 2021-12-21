@@ -12,6 +12,43 @@
 //const binaryParser = require('binary-parser').Parser;
 const binaryParser = require('binary-parser-encoder').Parser;
 
+// Used below in 'choice' sections to select WSJTX or JTDX
+// parsing as JTDX has diverged from WSJTX
+const PAYLOAD_FORMAT = {
+	wsjtx: 20,		// v2.0
+	wsjtx21: 21,	// v2.1
+	wsjtx23: 23,	// v2.3
+	jtdx: 99		// v2.2.157 (2021-12-20)
+};
+
+function payload_format(id) {
+	switch (id) {
+		case 'JTDX':
+			return PAYLOAD_FORMAT.jtdx;
+		
+		case 'WSJTX':
+		default:
+			return PAYLOAD_FORMAT.wsjtx23;
+	}
+}
+
+// safely handles circular references
+JSON.safeStringify = (obj, indent = 2) => {
+	let cache = [];
+	const retVal = JSON.stringify(
+	  obj,
+	  (key, value) =>
+		typeof value === "object" && value !== null
+		  ? cache.includes(value)
+			? undefined // Duplicate reference found, discard key
+			: cache.push(value) && value // Store value in our collection
+		  : value,
+	  indent
+	);
+	cache = null;
+	return retVal;
+  };
+
 const nullParser = new binaryParser();
 
 const stringParser = new binaryParser()
@@ -104,8 +141,15 @@ const heartbeatParser = new binaryParser()
 	.endianess('big')
 	.uint32('max_schema_number')
 	.nest('version', { type: stringParser, formatter: stringFormatter })
-	.nest('revision', { type: stringParser, formatter: stringFormatter });
-
+	.choice(null, {
+		tag: function() { return payload_format(this.id); },
+		defaultChoice: new binaryParser()
+			.nest('revision', { type: stringParser, formatter: stringFormatter }),
+		choices: {
+			99: new binaryParser()
+		}
+	});
+	
 // Out since v2.0
 const statusParser = new binaryParser()
 	.uint64('freqency')
@@ -124,13 +168,21 @@ const statusParser = new binaryParser()
 	.uint8('tx_watchdog', { formatter: boolFormatter })
 	.nest('sub_mode', { type: stringParser, formatter: stringFormatter })
 	.uint8('fast_mode', { formatter: boolFormatter })
-	.uint8('special_operation_mode', { formatter: operation_mode.format })
-	// since v2.1
-	.uint32('frequency_tolerance', { formatter: maxUnit32Formatter })
-	.uint32('tr_period', { formatter: maxUnit32Formatter })
-	.nest('configuration_name', { type: stringParser, formatter: stringFormatter })
-	// since v2.3
-	.nest('tx_message', { type: stringParser, formatter: stringFormatter });
+	.choice(null, {
+		tag: function() { return payload_format(this.id); },
+		defaultChoice: new binaryParser() // WSJTX
+			.uint8('special_operation_mode', { formatter: operation_mode.format })
+			// since v2.1
+			.uint32('frequency_tolerance', { formatter: maxUnit32Formatter })
+			.uint32('tr_period', { formatter: maxUnit32Formatter })
+			.nest('configuration_name', { type: stringParser, formatter: stringFormatter })
+			// since v2.3
+			.nest('tx_message', { type: stringParser, formatter: stringFormatter }),
+		choices: {
+			99: new binaryParser()	// JTDX 2.2
+				.uint8('tx_first', { formatter: boolFormatter })
+		}
+	});
 
 // Out since v2.0
 const decodeParser = new binaryParser()
@@ -314,10 +366,18 @@ const message_type = {
 	}
 };
 
-const wsjtxParser = new binaryParser()
+const short_wsjtxParser = new binaryParser()
 	.endianess('big')
 	.uint32('magic')
 	.uint32('version')
+	.uint32('type')
+	.nest('id', { type: stringParser, formatter: stringFormatter })
+	;
+
+const wsjtxParser = new binaryParser()
+	.endianess('big')
+	.uint32('magic', { assert: 0xadbccbda })
+	.uint32('version', { assert: 0x02 })
 	.uint32('type')
 	.nest('id', { type: stringParser, formatter: stringFormatter })
 	.choice(null, {
@@ -388,7 +448,10 @@ function decode(buffer) {
 
 		return decoded;
 	} catch (error) {
+		const short_decode = short_wsjtxParser.parse(buffer);
+
 		console.error(error);
+		console.error(short_decode);
 		return null;
 	}
 }
