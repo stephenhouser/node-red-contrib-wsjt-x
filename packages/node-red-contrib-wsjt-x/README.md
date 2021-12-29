@@ -1,6 +1,6 @@
 # node-red-contrib-wsjt-x
 
-A [NodeRed](https://nodered.org) node to handle the decoding of [WSJT-X](https://www.physics.princeton.edu/pulsar/k1jt/wsjtx.html) data. WSJT-X is an amatuer (ham) radio program that enables weak-signal radio communications using a variety of specially desinged protocols (FT8, FT4, WSPR, JT8, JT4, and more). This node allows the data decoded by WSJT-X to be injected into NodeRed flows for further processing and use.
+A [NodeRed](https://nodered.org) node to handle the decoding of [WSJT-X](https://www.physics.princeton.edu/pulsar/k1jt/wsjtx.html) (and [JTDX](https://www.jtdx.tech/en/)) data. WSJT-X is an amatuer (ham) radio program that enables weak-signal radio communications using a variety of specially desinged protocols (FT8, FT4, WSPR, JT8, JT4, and more). This node allows the data decoded by WSJT-X to be injected into NodeRed flows for further processing and use.
 
 ![Example NodeRed Flow](wsjt-x-decode.png)
 
