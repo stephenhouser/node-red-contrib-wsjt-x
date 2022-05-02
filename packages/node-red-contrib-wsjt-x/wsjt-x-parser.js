@@ -377,7 +377,9 @@ const short_wsjtxParser = new binaryParser()
 const wsjtxParser = new binaryParser()
 	.endianess('big')
 	.uint32('magic', { assert: 0xadbccbda })
-	.uint32('version', { assert: 0x02 })
+	.uint32('schema', { assert: function(version) {
+		return version >= 0x02 
+	}})
 	.uint32('type')
 	.nest('id', { type: stringParser, formatter: stringFormatter })
 	.choice(null, {
