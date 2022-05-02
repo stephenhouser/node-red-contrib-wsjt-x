@@ -6,10 +6,10 @@ services:
         network_mode: "host"
         environment:
             - TZ=EST5EDT
-        ports:
-            - "1880:1880/tcp"
-            - "2237:2237/udp"
-            - "9229:9229"
+              #        ports:
+              #      - "1880:1880/tcp"
+              # - "2237:2237/udp"
+              # - "9229:9229"
         volumes:
             - ./data-linked:/data
             - ../packages/node-red-contrib-wsjt-x:/data/node_modules/node-red-contrib-wsjt-x
