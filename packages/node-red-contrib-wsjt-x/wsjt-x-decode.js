@@ -22,6 +22,7 @@ module.exports = function(RED) {
 			const decoded = wsjtx.decode(msg.payload);
 			if (decoded && send) {
 				const message = {
+					...msg,
 					topic: decoded.type,
 					payload: decoded,
 					input: msg.payload
