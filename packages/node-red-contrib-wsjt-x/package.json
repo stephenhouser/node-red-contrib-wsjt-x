@@ -25,6 +25,9 @@
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"lint": "npx eslint --fix . || exit 0"
 	},
+	"engines": {
+		"node": ">=10"
+	},
 	"dependencies": {
 		"binary-parser": "^2.0.2",
 		"binary-parser-encoder": "^1.5.3"
@@ -37,6 +40,7 @@
 		"eslint-plugin-promise": "^5.1.0"
 	},
 	"node-red": {
+		"version": ">=2.0.0",
 		"nodes": {
 			"wsjt-x-decode": "wsjt-x-decode.js"
 		}
