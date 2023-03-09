@@ -9,8 +9,8 @@
  *
  * 2021/10/11 Stephen Houser, MIT License
  */
-//const binaryParser = require('binary-parser').Parser;
-const binaryParser = require('binary-parser-encoder').Parser;
+const binaryParser = require('binary-parser').Parser;
+const binaryEncoder = require('binary-parser-encoder').Parser;
 
 // Used below in 'choice' sections to select WSJTX or JTDX
 // parsing as JTDX has diverged from WSJTX
@@ -92,6 +92,22 @@ function timeFormatter(t) {
 	return d.valueOf();
 }
 
+// returns the number of bytes remaining in the buffer
+const remainingParser = new binaryParser()
+	.nest(null, {
+		type: new binaryParser()
+			.saveOffset('bufferStart')
+			.buffer('buffer', {
+				length: "readUntil",
+				readUntil: "eof",
+				type: "uint8"
+			})
+			.saveOffset('bufferEnd')
+			.seek(function() { return this.bufferEnd - this.bufferStart}),
+		formatter: function(b) {
+			return b.buffer.length; }
+		})	
+
 const operation_mode = {
 	none: 0,
 	na_vhf: 1,
@@ -134,6 +150,16 @@ const colorParser = new binaryParser()
 	.uint16('blue')
 	.uint16('pad');
 
+// Used to encode beginning of each message, not used for parsing
+baseFields = ['magic', 'schema', 'type', 'id'];
+const baseEncoder = new binaryEncoder()
+	.endianess('big')
+	.uint32('magic')
+	.uint32('schema')
+	.uint32('type')
+	.uint32('length', { encoder: function(str, obj) { return obj['id'].length; } })
+	.string('id', { length: 'length' });
+
 // *** Parsers for WSJT-X Datagrams ***
 
 // Out/In since v2.0
@@ -150,6 +176,15 @@ const heartbeatParser = new binaryParser()
 		}
 	});
 	
+const heartbeatFields = ['max_schema_number', 'version', 'revision'];
+const heartbeatEncoder = new binaryEncoder()
+	.nest(null, { type: baseEncoder })
+	.uint32('max_schema_number')
+	.uint32('ver_length', { encoder: function(str, obj) { return obj['version'].length; } })
+	.string('version', { length: 'ver_length'} )
+	.uint32('rev_length', { encoder: function(str, obj) { return obj['revision'].length; } })
+	.string('revision', { length: 'rev_length' });
+
 // Out since v2.0
 const statusParser = new binaryParser()
 	.uint64('freqency')
@@ -168,6 +203,7 @@ const statusParser = new binaryParser()
 	.uint8('tx_watchdog', { formatter: boolFormatter })
 	.nest('sub_mode', { type: stringParser, formatter: stringFormatter })
 	.uint8('fast_mode', { formatter: boolFormatter })
+	.nest('remainingBytes', {type: remainingParser})
 	.choice(null, {
 		tag: function() { return payload_format(this.id); },
 		defaultChoice: new binaryParser() // WSJTX
@@ -198,14 +234,23 @@ const decodeParser = new binaryParser()
 	.uint8('off_air');
 
 // Out/In since v2.0
-const clearParser = new binaryParser()
-	.endianess('big');
-// since v2.1
 // Not sent from WSJTX
-// .uint8('window');
+const clearParser = new binaryParser()
+	.endianess('big')
+	.nest('remainingBytes', {type: remainingParser})
+	.choice(null, {
+		tag: 'remainingBytes',
+		defaultChoice: new binaryParser(),	// no additional fields
+		choices: {
+			1: new binaryParser()	// since v2.1
+				.uint8('window')
+		}
+	});
 
-function clearEncoder(message) {
-}
+const clearFields = [];
+const clearEncoder = new binaryEncoder()
+	.nest(null, { type: baseEncoder })
+	.uint8('window');
 
 /* Modifiers
  * 0x00 - none
@@ -371,8 +416,7 @@ const short_wsjtxParser = new binaryParser()
 	.uint32('magic')
 	.uint32('version')
 	.uint32('type')
-	.nest('id', { type: stringParser, formatter: stringFormatter })
-	;
+	.nest('id', { type: stringParser, formatter: stringFormatter });
 
 const wsjtxParser = new binaryParser()
 	.endianess('big')
@@ -458,17 +502,57 @@ function decode(buffer) {
 	}
 }
 
+function checkFields(msg, field_list) {
+	const missing_fields = [...baseFields, ...field_list];
+	Object.keys(msg).forEach(key => {
+		const idx = missing_fields.indexOf(key);
+		if (idx > -1) {
+			missing_fields.splice(idx, 1);
+		}
+	});
+
+	return missing_fields;
+}
+
+function checkedEncoder(msg, encoder, field_list) {
+	const missing = checkFields(msg, field_list);
+	if (missing.length <= 0) {
+		return encoder.encode(msg);
+	}
+
+	//console.log(`Missing fields ${missing} in message to be encoded`);
+	return `Missing fields [${missing}] in message to be encoded`;
+}
+
 function encode(obj) {
-	const type_code = message_type.indexOf(obj.type);
+	console.log(`Encode:\t${JSON.stringify(obj)}`);
+
+	const type_code = message_type.encode(obj.type);
 	if (type_code < 0) {
 		return null;
 	}
 
-	try {
-		// TODO: encode...
-		console.error('wsjtx.encode() not implemented.');
-		return null;
+	const msg = {
+		'magic':  2914831322,
+		'schema': 2,
+		'id': 'NODE-JS',
+		'type': type_code,
+		...obj
+	};	// make a copy with defaults
 
+	console.log(`\t${JSON.stringify(msg)}`);
+	try {
+		switch (type_code) {
+			case message_type.clear:
+				return checkedEncoder(msg, clearEncoder, clearFields);
+
+			case message_type.heartbeat:
+				return checkedEncoder(msg, heartbeatEncoder, heartbeatFields);
+
+			default:
+				console.error(`wsjtx.encode(${obj.type}) not implemented.`);
+				return null;
+		}
 	} catch (error) {
 		console.error(error);
 		return null;
