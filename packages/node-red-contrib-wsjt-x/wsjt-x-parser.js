@@ -381,6 +381,7 @@ const configureParser = new binaryParser()
 
 // *** The root parser ***
 
+// Defined message types that WSJT-X will send.
 const message_type = {
 	heartbeat: 0,
 	status: 1,
@@ -411,6 +412,8 @@ const message_type = {
 	}
 };
 
+// Decodes only the minimal required WSJT-X fields.
+// Used when the full decoder fails and we want some results.
 const short_wsjtxParser = new binaryParser()
 	.endianess('big')
 	.uint32('magic')
@@ -418,6 +421,7 @@ const short_wsjtxParser = new binaryParser()
 	.uint32('type')
 	.nest('id', { type: stringParser, formatter: stringFormatter });
 
+// Core WSJT-X decoder/parser, uses other sub-parsers depending on 'type'
 const wsjtxParser = new binaryParser()
 	.endianess('big')
 	.uint32('magic', { assert: 0xadbccbda })
@@ -449,6 +453,8 @@ const wsjtxParser = new binaryParser()
 		}
 	});
 
+// Heuristically attempt decoding common WSJT-X exchange messages
+// Not perfect, but works in many cases.
 function decode_exchange(message) {
 	const exchange = message.split(' ');
 	if (exchange[0] === 'CQ') {
@@ -482,6 +488,9 @@ function decode_exchange(message) {
 	return { type: 'tx1', dx_call: exchange[0], de_call: exchange[1], de_grid: exchange[2] };
 }
 
+
+// Decode a Buffer of data (from a UDP datagram) into an object
+// with keys and values representing the parsed data.
 function decode(buffer) {
 	try {
 		const decoded = wsjtxParser.parse(buffer);
@@ -502,6 +511,8 @@ function decode(buffer) {
 	}
 }
 
+// Checks that msg has keys that match everything in field_list
+// returns the fields that are missing or an empty list
 function checkFields(msg, field_list) {
 	const missing_fields = [...baseFields, ...field_list];
 	Object.keys(msg).forEach(key => {
@@ -514,6 +525,9 @@ function checkFields(msg, field_list) {
 	return missing_fields;
 }
 
+// Calls the encoder.encode() function after checking that the
+// message has all the required fields.
+// Returns the encoded Buffer or a 'string' error message.
 function checkedEncoder(msg, encoder, field_list) {
 	const missing = checkFields(msg, field_list);
 	if (missing.length <= 0) {
@@ -524,6 +538,9 @@ function checkedEncoder(msg, encoder, field_list) {
 	return `Missing fields [${missing}] in message to be encoded`;
 }
 
+// Enocde object to a UDP-ready buffer
+// Returns a Buffer on success or a string error message.
+// Check the return type!
 function encode(obj) {
 	console.log(`Encode:\t${JSON.stringify(obj)}`);
 
