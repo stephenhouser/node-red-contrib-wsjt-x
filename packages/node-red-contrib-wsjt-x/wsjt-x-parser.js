@@ -49,8 +49,10 @@ JSON.safeStringify = (obj, indent = 2) => {
 	return retVal;
   };
 
+// does not parse anything but is a parser
 const nullParser = new binaryParser();
 
+// parses length (uint32) prefixed-strings
 const stringParser = new binaryParser()
 	.uint32('length', {
 		formatter: function(len) {
@@ -63,6 +65,7 @@ function stringFormatter(s) {
 	return s.string.replace(/^\s+|\s+$/g, '');
 }
 
+// parses WSJT-x/Qt dates
 const dateTimeParser = new binaryParser()
 	.uint64('day')
 	.uint32('time', { formatter: timeFormatter })
@@ -141,7 +144,7 @@ function maxUnit32Formatter(value) {
 	return value === 0xffffffff ? null : value;
 }
 
-// (untested)
+// (untested) parses colors
 const colorParser = new binaryParser()
 	.uint8('colorspec')
 	.uint16('alpha')
@@ -150,6 +153,7 @@ const colorParser = new binaryParser()
 	.uint16('blue')
 	.uint16('pad');
 
+// baseParser and baseFields
 // Used to encode beginning of each message, not used for parsing
 baseFields = ['magic', 'schema', 'type', 'id'];
 const baseEncoder = new binaryEncoder()
@@ -289,8 +293,19 @@ const replyParser = new binaryParser()
 	.uint8('low_confidence')
 	.uint8('modifiers', { format: modifier_type.format });
 
-function replyEncoder(message) {
-}
+const replyFields = ['time', 'snr', 'delta_time', 'delta_frequency', 'mode', 'message', 'low_confidence', 'modifiers'];
+const replyEncoder = new binaryEncoder()
+	.nest(null, { type: baseEncoder })
+	.uint32('time')
+	.int32('snr')
+	.doublebe('delta_time')
+	.uint32('delta_frequency')
+	.uint32('mode_length', { encoder: function(str, obj) { return obj['mode'].length; } })
+	.string('mode', { length: 'mode_length'} )
+	.uint32('msg_length', { encoder: function(str, obj) { return obj['message'].length; } })
+	.string('message', { length: 'msg_length' })
+	.uint8('low_confidence')
+	.uint8('modifiers');
 
 // Out since v2.0
 const qsoLoggedParser = new binaryParser()
@@ -565,6 +580,9 @@ function encode(obj) {
 
 			case message_type.heartbeat:
 				return checkedEncoder(msg, heartbeatEncoder, heartbeatFields);
+
+			case message_type.reply:
+				return checkedEncoder(msg, replyEncoder, replyFields);
 
 			default:
 				console.error(`wsjtx.encode(${obj.type}) not implemented.`);

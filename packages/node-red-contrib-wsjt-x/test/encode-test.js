@@ -4,14 +4,18 @@ function buffer2hex(buffer) {
 		.map(x => x.toString(16).padStart(2, '0'))
 		.join(' ');
 }
-const wsjtx = require('../wsjt-x-parser');
+const wsjtx = require('../wsjt-x-parser-v2');
 const clearMsg = {
+    id: 'NODEJS',
     type: 'clear',
+    window: 1
 };
 
+console.log(`Encode: ${JSON.stringify(clearMsg)}`);
 buf = wsjtx.encode(clearMsg);
-console.log(buffer2hex(buf));	  
-
+console.log(`\t${buffer2hex(buf)}`);	  
+console.log(`\t${JSON.stringify(wsjtx.decode(buf))}`);
+console.log('---');
 
 const heartbeatMsg = {
     type: 'heartbeat',
@@ -20,11 +24,9 @@ const heartbeatMsg = {
     revision: ''
   }
 
+console.log(`Encode: ${JSON.stringify(heartbeatMsg)}`);
 buf = wsjtx.encode(heartbeatMsg);
-if (typeof(buf) == 'string') {
-    console.log(`ERROR: ${buf}`);
-} else {
-    console.log(buffer2hex(buf));
-    msg = wsjtx.decode(buf);
-    console.log(`Decode: ${JSON.stringify(msg)}`);
-}
+console.log(`\t${buffer2hex(buf)}`);	  
+console.log(`\t${JSON.stringify(wsjtx.decode(buf))}`);
+console.log('---');
+  

@@ -1,11 +1,11 @@
 // UDP Client that will send faux FlexRadio data to listeners
 const pcap = require('pcap');
-const wsjtx = require('../wsjt-x-parser');
+const wsjtx = require('../wsjt-x-parser-v2');
 
 let packet_n = 0;
 
 // const ignore_types = [];
-const ignore_types = ['status', 'decode'];
+const ignore_types = ['status', 'decode', 'heartbeat'];
 
 
 function buffer2hex(buffer) {
@@ -23,7 +23,7 @@ async function test_packet(datagram, packet) {
 	console.log(`\n\nPacket #${packet_n}: ${packet.payload.payload.saddr} -> ${packet.payload.payload.daddr}`);
 	console.log(buffer2hex(datagram.data));
 	console.log(decoded);
-}
+}	
 
 function get_udp_packet(packet) {
 	if (packet &&
