@@ -440,8 +440,8 @@ class WSJTXParser {
 		});
 
 	decode(buffer) {
-			return this.parser.parse(buffer)
-		}
+		return this.parser.parse(buffer)
+	}
 	
 		// Checks that msg has keys that match everything in field_list
 	// returns the fields that are missing or an empty list
