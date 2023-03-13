@@ -15,7 +15,7 @@
  * Schema version really only tells us the QT data stream format.
  */
 
-const binaryParser = require('binary-parser-encoder').Parser;
+const binaryParser = require('binary-parser').Parser;
 const binaryEncoder = require('binary-parser-encoder').Parser;
 
 // Used below in 'choice' sections to select WSJTX or JTDX
@@ -38,6 +38,8 @@ JSON.safeStringify = (obj, indent = 2) => {
 	return retVal;
   };
 
+const nullParser = new binaryParser();
+
 // parses length (uint32) prefixed-strings
 const stringParser = new binaryParser()
 	.uint32('length', {
@@ -54,7 +56,7 @@ function stringFormatter(s) {
 // parses WSJT-x/Qt dates
 const dateTimeParser = new binaryParser()
 	.uint64('day')
-	.uint32('time', { formatter: timeFormatter })
+	.uint32('time')
 	.uint8('timespec', {
 		formatter: function(t) {
 			switch (t) {
@@ -71,18 +73,35 @@ const dateTimeParser = new binaryParser()
 		choices: {
 			2: new binaryParser().uint32('offset'),
 		}
-	});
+	})
+	.nest('datetime_decode', { type: nullParser, formatter: function(s) {
+		const unixtime = (parseFloat(this.day) - 2440587.5) * 86400000;
+		var thedate = new Date(unixtime)
+		thedate.setUTCHours(0, 0, 0, 0)
+		fixed = new Date(thedate.valueOf() + this.time)
+		return fixed.toISOString();
+	}})
+	;
 
-// Time is seconds since midnight UTC
-function timeFormatter(t) {
+// Time is milli-seconds since midnight UTC
+// This creates a datetime object using today as date
+function toISODateString(t) {
 	var d = new Date();
 	d.setUTCHours(0, 0, 0, 0);
 	d = new Date(d.valueOf() + t);
-	return d.valueOf();
+	return d.toISOString();
 }
 
 function boolFormatter(b) {
 	return b === 1;
+}
+
+function boolEncoder(b) {
+	if (typeof(b) == 'string') {
+		return b == 'true' ? 1 : 0;
+	}
+
+	return b ? 1 : 0;
 }
 
 function numberFormatter(n) {
@@ -236,7 +255,10 @@ class WSJTXParser {
 	decodeParser = new binaryParser()
 		.endianess('big')
 		.uint8('new', { formatter: boolFormatter })
-		.uint32('time', { formatter: timeFormatter })
+		.uint32('time')
+		.nest('datetime_decode', { type: nullParser, formatter: function(s) {
+			return toISODateString(this.time);
+		}})
 		.int32('snr')
 		.doublebe('delta_time')
 		.uint32('delta_frequency')
@@ -260,7 +282,10 @@ class WSJTXParser {
 	// In  (untested) since v2.0
 	replyParser = new binaryParser()
 		.endianess('big')
-		.uint32('time', { formatter: timeFormatter })
+		.uint32('time')
+		.nest('datetime_decode', { type: nullParser, formatter: function(s) {
+			return toISODateString(this.time);
+		}})
 		.int32('snr')
 		.doublebe('delta_time')
 		.uint32('delta_frequency')
@@ -319,7 +344,7 @@ class WSJTXParser {
 	haltTxFields = [...this.baseFields, 'auto_tx_only'];
 	haltTxEncoder =  new binaryEncoder()
 		.nest(null, { type: this.baseEncoder })
-		.uint8('auto_tx_only');
+		.uint8('auto_tx_only', { encoder: boolEncoder });
 
 	// In (untested) since v2.0
 	freeTextParser = new binaryParser()
@@ -338,7 +363,10 @@ class WSJTXParser {
 	wsprDecodeParser = new binaryParser()
 		.endianess('big')
 		.uint8('new', { formatter: boolFormatter })
-		.uint32('time', { formatter: timeFormatter })
+		.uint32('time')
+		.nest('datetime_decode', { type: nullParser, formatter: function(s) {
+			return toISODateString(this.time);
+		}})		
 		.int32('snr')
 		.doublebe('delta_time')
 		.uint64('frequency')
@@ -473,6 +501,9 @@ class WSJTXParser {
 
 			case messageType.reply:
 				return this.checkedEncoder(encode_msg, this.replyEncoder, this.replyFields);
+
+			case messageType.halt_tx:
+				return this.checkedEncoder(encode_msg, this.haltTxEncoder, this.haltTxFields);
 
 			default:
 				console.error(`wsjtx.encode(${msg.type}) not implemented.`);

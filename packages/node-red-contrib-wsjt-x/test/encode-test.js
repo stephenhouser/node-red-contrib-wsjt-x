@@ -5,28 +5,46 @@ function buffer2hex(buffer) {
 		.join(' ');
 }
 const wsjtx = require('../wsjt-x-parser-v2');
-const clearMsg = {
+
+
+function test_message(msg) {
+  console.log('');
+  console.log(`Encode: ${JSON.stringify(msg)}`);
+  buf = wsjtx.encode(msg);
+  console.log(`\t${buffer2hex(buf)}`);
+  dmsg = wsjtx.decode(buf)
+  console.log(`Decode: ${JSON.stringify(dmsg)}`);
+  console.log('');
+  
+}
+
+test_message({
     id: 'NODEJS',
     type: 'clear',
     window: 1
-};
+});
 
-console.log(`Encode: ${JSON.stringify(clearMsg)}`);
-buf = wsjtx.encode(clearMsg);
-console.log(`\t${buffer2hex(buf)}`);	  
-console.log(`\t${JSON.stringify(wsjtx.decode(buf))}`);
-console.log('---');
-
-const heartbeatMsg = {
+test_message({
     type: 'heartbeat',
     max_schema_number: 3,
     version: '2.6.1',
     revision: ''
-  }
+});
 
-console.log(`Encode: ${JSON.stringify(heartbeatMsg)}`);
-buf = wsjtx.encode(heartbeatMsg);
-console.log(`\t${buffer2hex(buf)}`);	  
-console.log(`\t${JSON.stringify(wsjtx.decode(buf))}`);
-console.log('---');
-  
+test_message({
+  type: 'reply',
+  time: 67500000,
+  snr: 0,
+  delta_time: 0.20000000298023224,
+  delta_frequency: 1612,
+  mode: '~',
+  message: 'CQ N1SH FN43',
+  low_confidence: 0,
+  modifiers: '',
+});
+
+test_message({
+  type: 'halt_tx',
+  auto_tx_only: false
+});
+
