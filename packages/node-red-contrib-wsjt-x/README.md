@@ -13,10 +13,11 @@ WSJT-X with.
 WSJT-X also allows commands to be sent via it's UDP port (when enabled)! The `wsjt-x-decode` node can take a message object and encode a proper buffer for sending out with a UDP node.
 
 Currently implemented encoders for:
-    - clear: `{"type":"clear","window":2}`
-    - heartbeat: `{"type":"heartbeat","max_schema_number":3,"version":"2.6.1","revision":""}`
-    - reply (untested):
-    - halt_tx: `{"type":"halt_tx","auto_tx_only":false}`
+
+- clear: `{"type":"clear","window":2}`
+- heartbeat: `{"type":"heartbeat","max_schema_number":3,"version":"2.6.1","revision":""}`
+- reply (untested):
+- halt_tx: `{"type":"halt_tx","auto_tx_only":false}`
 
 The UDP out node needs to have the destination IP and port set to the IP and port of where WSJT-X sends from. This may be different than what you see in the Settings. You can easily discover these as they are available on any incoming UDP datagram from WSJT-X. An example flow is included that saves these in flow variables from incoming datagrams, and sets them just before the encoded message goes to the UDP out node.
 
