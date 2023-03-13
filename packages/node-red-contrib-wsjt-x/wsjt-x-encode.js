@@ -18,16 +18,22 @@ module.exports = function(RED) {
 		const node = this;
 		node.name = config.name;
 
+		node.wsjtx_id = config.wsjtx_id;
 		node.wsjtx_version = parseFloat(config.version);
         node.wsjtx_schema = parseInt(config.schema);
 
 		node.on('input', function(msg, send, done) {
-			const decoded = wsjtx.encode(msg.payload, node.wsjtx_version, node.wsjtx_schema);
-			if (decoded && send) {
+			// Add id if there is not one.
+			if (!msg.payload.hasOwnProperty('id')) {
+				msg.payload['id'] = node.wsjtx_id;
+			}
+
+			const encoded = wsjtx.encode(msg.payload, node.wsjtx_version, node.wsjtx_schema);
+			if (encoded && send) {
 				const message = {
 					...msg,
-					topic: decoded.type,
-					payload: decoded,
+					topic: msg.type,
+					payload: encoded,
 					input: msg.payload
 				};
 

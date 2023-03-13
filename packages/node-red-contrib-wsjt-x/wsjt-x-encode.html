@@ -4,6 +4,7 @@
         color: '#cce5ff',
         defaults: {
             name: { value: '' },
+            wsjtx_id: { value: 'NODE-RED' },
             version: { value: 2.6, validate:RED.validators.number() },
             schema: { value: 3, validate:RED.validators.number() }
         },
@@ -23,6 +24,10 @@
     </div>
     
     <p>WSJT-X</p>
+    <div class="form-row">
+        <label for="node-input-wsjtx_id"><i class="fa fa-tag"></i> WSJT-X Id</label>
+        <input type="text" id="node-input-wsjtx_id" placeholder="NODE-RED">
+    </div>
     <div class="form-row">
         <label for="node-input-version"><i class="fa fa-sign-in"></i> Version</label>
         <select id="node-input-version">

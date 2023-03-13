@@ -18,6 +18,8 @@ function test_message(msg) {
   
 }
 
+test_message({type:"halt_tx",auto_tx_only:false,id:"NODE-1"});
+
 test_message({
     id: 'NODEJS',
     type: 'clear',
