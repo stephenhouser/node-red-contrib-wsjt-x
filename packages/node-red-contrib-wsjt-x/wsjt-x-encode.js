@@ -23,12 +23,20 @@ module.exports = function(RED) {
         node.wsjtx_schema = parseInt(config.schema);
 
 		node.on('input', function(msg, send, done) {
-			// Add id if there is not one.
-			if (!msg.payload.hasOwnProperty('id')) {
+			// we can only encode objects, not strings or numbers, or buffers...
+			if (typeof(msg.payload) != 'object') {
+				throw new Error(`Can only encode objects, ${typeof(msg.payload)} was given.`);
+			}
+
+			// Add WSJT-X Id from node configuration if there is not one given.
+			if (!('id' in msg.payload)) {
 				msg.payload['id'] = node.wsjtx_id;
 			}
 
+			// encode!
 			const encoded = wsjtx.encode(msg.payload, node.wsjtx_version, node.wsjtx_schema);
+
+			// Send off the result without modifying the original message.
 			if (encoded && send) {
 				const message = {
 					...msg,

@@ -18,6 +18,7 @@ Currently implemented encoders for:
 - heartbeat: `{"type":"heartbeat","max_schema_number":3,"version":"2.6.1","revision":""}`
 - reply (untested):
 - halt_tx: `{"type":"halt_tx","auto_tx_only":false}`
+- close: `{"type":"close"}`
 
 The UDP out node needs to have the destination IP and port set to the IP and port of where WSJT-X sends from. This may be different than what you see in the Settings. You can easily discover these as they are available on any incoming UDP datagram from WSJT-X. An example flow is included that saves these in flow variables from incoming datagrams, and sets them just before the encoded message goes to the UDP out node.
 

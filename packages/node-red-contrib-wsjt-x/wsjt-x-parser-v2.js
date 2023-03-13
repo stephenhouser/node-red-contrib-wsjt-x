@@ -451,7 +451,7 @@ class WSJTXParser {
 		return this.parser.parse(buffer)
 	}
 	
-		// Checks that msg has keys that match everything in field_list
+	// Checks that msg has keys that match everything in field_list
 	// returns the fields that are missing or an empty list
 	checkFields(msg, field_list) {
 		const missing_fields = [...field_list];
@@ -465,24 +465,26 @@ class WSJTXParser {
 		return missing_fields;
 	}
 
-	// Calls the encoder.encode() function after checking that the
-	// message has all the required fields.
-	// Returns the encoded Buffer or a 'string' error message.
-	checkedEncoder(msg, encoder, field_list) {
-		const missing = this.checkFields(msg, field_list);
-		if (missing.length <= 0) {
-			return encoder.encode(msg);
-		}
+	// list of encoders we support.
+	// each entry is a list of [the-encoder, required-fields]
+	encoders = {
+		'clear': 		[this.clearEncoder, this.clearFields],
+		'heartbeat': 	[this.heartbeatEncoder, this.heartbeatFields],
+		'reply':  		[this.replyEncoder, this.replyFields],
+		'halt_tx': 		[this.haltTxEncoder, this.haltTxFields],
+	};
 
-		throw new Error(`Missing fields [${missing}] in message to be encoded`);
-	}
-
+	// encode a message to WSJT-X datagram
 	encode(msg) {
 		const type_code = messageType.encode(msg.type);
 		if (type_code < 0) {
-			return null;
+			throw new Error(`Invalid WSJT-X message type: ${msg.type}`);
 		}
-		
+
+		if (!(msg.type in this.encoders)) {
+			throw new Error(`No WSJT-X encoder for message type: ${msg.type}`);
+		}
+
 		// make a copy with defaults
 		const encode_msg = {
 			...msg,
@@ -497,23 +499,15 @@ class WSJTXParser {
 		if (!encode_msg.hasOwnProperty('id')) {
 			encode_msg['id'] = DEFAULT_ID;
 		}
-		
-		switch (type_code) {
-			case messageType.clear:
-				return this.checkedEncoder(encode_msg, this.clearEncoder, this.clearFields);
 
-			case messageType.heartbeat:
-				return this.checkedEncoder(encode_msg, this.heartbeatEncoder, this.heartbeatFields);
-
-			case messageType.reply:
-				return this.checkedEncoder(encode_msg, this.replyEncoder, this.replyFields);
-
-			case messageType.halt_tx:
-				return this.checkedEncoder(encode_msg, this.haltTxEncoder, this.haltTxFields);
-
-			default:
-				throw new Error(`No WSJT-X encoder for "${msg.type}".`);
+		// find the encoder and it's required fields in the encoders list
+		const [encoder, fields] = this.encoders[msg.type];
+		const missing = this.checkFields(encode_msg, fields);
+		if (missing.length <= 0) {
+			return encoder.encode(encode_msg);
 		}
+
+		throw new Error(`Missing fields [${missing}] in message to be encoded`);
 	}
 }
 
@@ -527,6 +521,13 @@ class WSJTXParser_v200 extends WSJTXParser {
 }
 
 class WSJTXParser_v210 extends WSJTXParser_v200 {
+	// In since v2.1
+	closeFields = [];
+	closeEncoder = new binaryEncoder()
+		.nest(null, { type: this.baseEncoder })
+		.endianess('big');
+
+	//
 	statusParser = this.statusParser
 		.uint32('frequency_tolerance', { formatter: maxUnit32Formatter })
 		.uint32('tr_period', { formatter: maxUnit32Formatter })
@@ -575,6 +576,11 @@ class WSJTXParser_v210 extends WSJTXParser_v200 {
 				15: this.configureParser
 			}
 		});
+
+	encoders = {
+		...this.encoders,
+		'close': [this.closeEncoder, this.closeFields],
+	};
 }
 
 class WSJTXParser_v230 extends WSJTXParser_v210 {
