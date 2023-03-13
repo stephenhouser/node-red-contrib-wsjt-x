@@ -1,0 +1,47 @@
+<script type="text/javascript">
+    RED.nodes.registerType('wsjt-x-encode', {
+        category: 'ham radio',
+        color: '#cce5ff',
+        defaults: {
+            name: { value: '' },
+            version: { value: 2.6, validate:RED.validators.number() },
+            schema: { value: 3, validate:RED.validators.number() }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: 'font-awesome/fa-server',
+        label: function() {
+            return this.name || 'wsjt-x-encode';
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="wsjt-x-encode">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    
+    <p>WSJT-X</p>
+    <div class="form-row">
+        <label for="node-input-version"><i class="fa fa-sign-in"></i> Version</label>
+        <select id="node-input-version">
+            <option value="2.6">Latest</option>
+            <option value="2.6">2.6.x</option>
+            <option value="2.5">2.5.x</option>
+            <option value="2.4">2.4.x</option>
+            <option value="2.3">2.3.x</option>
+            <option value="2.2">2.2.x</option>
+            <option value="2.1">2.1.x</option>
+            <option value="2.0">2.0.x</option>
+        </select>
+    </div>    
+    <div class="form-row">
+        <label for="node-input-schema"><i class="fa fa-sign-in"></i> Schema</label>
+        <select id="node-input-schema">
+            <option value="3">Latest</option>
+            <option value="3">3</option>
+            <option value="2">2</option>
+        </select>
+    </div>    
+</script>

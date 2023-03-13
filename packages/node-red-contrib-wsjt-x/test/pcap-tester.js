@@ -20,7 +20,7 @@ async function test_packet(datagram, packet) {
 		return;
 	}
 
-	console.log(`\n\nPacket #${packet_n}: ${packet.payload.payload.saddr} -> ${packet.payload.payload.daddr}`);
+	console.log(`\n\nPacket #${packet_n}: ${packet.payload.payload}`);
 	console.log(buffer2hex(datagram.data));
 	console.log(decoded);
 }	

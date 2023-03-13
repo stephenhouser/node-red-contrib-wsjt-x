@@ -18,6 +18,10 @@
 const binaryParser = require('binary-parser').Parser;
 const binaryEncoder = require('binary-parser-encoder').Parser;
 
+const DEFAULT_SCHEMA = 3;
+const DEFAULT_VERSION = 2.6;
+const DEFAULT_ID = "NODE-JS";
+
 // Used below in 'choice' sections to select WSJTX or JTDX
 // parsing as JTDX has diverged from WSJTX
 
@@ -191,6 +195,10 @@ const statusOperationMode = {
 // *** Parsers for WSJT-X Datagrams ***
 
 class WSJTXParser {
+	constructor(schema=DEFAULT_SCHEMA) {
+		this.schema = schema;
+	}
+
 	// baseParser and baseFields
 
 	// Decodes only the minimal required WSJT-X fields.
@@ -466,9 +474,7 @@ class WSJTXParser {
 			return encoder.encode(msg);
 		}
 
-		//console.log(`Missing fields ${missing} in message to be encoded`);
 		throw new Error(`Missing fields [${missing}] in message to be encoded`);
-		return null;
 	}
 
 	encode(msg) {
@@ -485,11 +491,11 @@ class WSJTXParser {
 		};
 
 		if (!encode_msg.hasOwnProperty('schema')) {
-			encode_msg['schema'] = 2;
+			encode_msg['schema'] =this.schema;
 		}
 
 		if (!encode_msg.hasOwnProperty('id')) {
-			encode_msg['id'] = 'NODEJS';
+			encode_msg['id'] = DEFAULT_ID;
 		}
 		
 		switch (type_code) {
@@ -506,8 +512,7 @@ class WSJTXParser {
 				return this.checkedEncoder(encode_msg, this.haltTxEncoder, this.haltTxFields);
 
 			default:
-				console.error(`wsjtx.encode(${msg.type}) not implemented.`);
-				return null;
+				throw new Error(`No WSJT-X encoder for "${msg.type}".`);
 		}
 	}
 }
@@ -620,25 +625,25 @@ function decode_exchange(message) {
 	return { type: 'tx1', dx_call: exchange[0], de_call: exchange[1], de_grid: exchange[2] };
 }
 
-function getParser(version_string, schema=2) {
+function getParser(version_string, schema) {
 	if (typeof(version) != 'number') {
 		version = parseFloat(version_string);
 	}
 
 	if (version >= 2.3) {
-		return new WSJTXParser_v230();
+		return new WSJTXParser_v230(schema);
 	}
 
 	if (version >= 2.1) {
-		return new WSJTXParser_v210();
+		return new WSJTXParser_v210(schema);
 	}
 
-	return new WSJTXParser_v200();
+	return new WSJTXParser_v200(schema);
 }
 
 // Decode a Buffer of data (from a UDP datagram) into an object
 // with keys and values representing the parsed data.
-function decode(buffer, version=2.3, schema=2) {
+function decode(buffer, version=DEFAULT_VERSION, schema=DEFAULT_SCHEMA) {
 	const decoded = getParser(version, schema).decode(buffer);
 	decoded.type = messageType.format(decoded.type);
 
@@ -653,9 +658,8 @@ function decode(buffer, version=2.3, schema=2) {
 // Enocde object to a UDP-ready buffer
 // Returns a Buffer on success or a string error message.
 // Check the return type!
-function encode(msg, version='2.6', schema=2) {
+function encode(msg, version=DEFAULT_VERSION, schema=DEFAULT_SCHEMA) {
 	// console.log(`Encode:\t${JSON.stringify(msg)}`);
-
 	const encoded = getParser(version, schema).encode(msg);
 	return encoded;
 }

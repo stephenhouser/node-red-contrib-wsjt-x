@@ -43,7 +43,8 @@
 	"node-red": {
 		"version": ">=2.0.0",
 		"nodes": {
-			"wsjt-x-decode": "wsjt-x-decode.js"
+			"wsjt-x-decode": "wsjt-x-decode.js",
+			"wsjt-x-encode": "wsjt-x-encode.js"
 		}
 	}
 }
