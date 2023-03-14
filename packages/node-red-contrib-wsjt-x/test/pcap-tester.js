@@ -4,8 +4,8 @@ const wsjtx = require('../wsjt-x-parser-v2');
 
 let packet_n = 0;
 
-// const ignore_types = [];
-const ignore_types = ['status', 'decode', 'heartbeat'];
+const ignore_types = [];
+//const ignore_types = ['status', 'decode', 'heartbeat'];
 
 
 function buffer2hex(buffer) {

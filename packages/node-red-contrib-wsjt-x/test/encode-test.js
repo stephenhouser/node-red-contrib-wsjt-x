@@ -4,7 +4,7 @@ function buffer2hex(buffer) {
 		.map(x => x.toString(16).padStart(2, '0'))
 		.join(' ');
 }
-const wsjtx = require('../wsjt-x-parser-v2');
+const wsjtx = require('../wsjt-x-parser');
 
 
 function test_message(msg) {

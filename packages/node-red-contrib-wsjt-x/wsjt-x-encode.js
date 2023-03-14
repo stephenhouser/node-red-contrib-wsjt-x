@@ -7,7 +7,7 @@
  *
  * 2021/10/11 Stephen Houser, MIT License
  */
-const wsjtx = require('./wsjt-x-parser-v2');
+const wsjtx = require('./wsjt-x-parser');
 
 module.exports = function(RED) {
 	'use strict';
