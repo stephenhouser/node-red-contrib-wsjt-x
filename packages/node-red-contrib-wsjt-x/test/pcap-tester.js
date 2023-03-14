@@ -1,6 +1,6 @@
 // UDP Client that will send faux FlexRadio data to listeners
 const pcap = require('pcap');
-const wsjtx = require('../wsjt-x-parser-v2');
+const wsjtx = require('../wsjt-x-parser');
 
 let packet_n = 0;
 
