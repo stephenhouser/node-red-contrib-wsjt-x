@@ -28,24 +28,27 @@ module.exports = function(RED) {
 				throw new Error(`Can only encode objects, ${typeof(msg.payload)} was given.`);
 			}
 
-			// Add WSJT-X Id from node configuration if there is not one given.
-			if (!('id' in msg.payload)) {
-				msg.payload['id'] = node.wsjtx_id;
+			// the type of message can be either in the payload or in the topic
+			// prefer msg.payload.type to msg.topic
+			if ('type' in msg.payload) {
+				msg.topic = msg.payload['type'];
+			} else if (msg.topic) {
+				msg.payload['type'] = msg.topic;
+			} else {
+				throw new Error(`No message type was given (msg.topic or msg.payload.type) cannot encode.`);
 			}
 
-			// encode!
-			const encoded = wsjtx.encode(msg.payload, node.wsjtx_version, node.wsjtx_schema);
+			// Add WSJT-X Id from node configuration if there is not one given in the payload
+			if (!('id' in encode_msg.payload)) {
+				encode_msg.payload['id'] = node.wsjtx_id;
+			}
+
+			msg.input = msg.payload;
+			msg.payload = wsjtx.encode(msg, node.wsjtx_version, node.wsjtx_schema);
 
 			// Send off the result without modifying the original message.
-			if (encoded && send) {
-				const message = {
-					...msg,
-					topic: msg.type,
-					payload: encoded,
-					input: msg.payload
-				};
-
-				send(message);
+			if (msg.payload && send) {
+				send(msg);
 			}
 
 			if (done) {

@@ -3,15 +3,16 @@
 
     <h3>Inputs</h3>
     <dl class="message-properties">
-       <dt>payload <span class="property-type">object</span></dt>
-       <dd> The object that specifies the type of message to encode and its associated data.
-        The <code>topic</code> will be the message type (heartbeat, status, decode, etc.) and the 
-       <code>payload</code> will contain the decoded fields for that message type.</dd>
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd> The object that specifies the to encode and its associated data.
+        The <code>topic</code> should be the message <code>type</code> (heartbeat, status, decode, etc.). The 
+        <code>payload</code> should contain the fields for that message <code>type</code> as appropriate. 
+        If <code>payload.type</code> is given it will be used instead of any value in <code>topic</code>.</dd>
     </dl>
 
     <h3>Outputs</h3>
     <dl class="message-properties">
         <dt>payload <span class="property-type">buffer</span></dt>
-            <dd> A buffer of encoded data suitable for a UDP Out node </dd>
+            <dd> A buffer of encoded data suitable for a UDP Out node.</dd>
      </dl>
 </script>
