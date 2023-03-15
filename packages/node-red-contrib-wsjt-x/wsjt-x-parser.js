@@ -10,11 +10,6 @@
  * 2021/10/11 Stephen Houser, MIT License
  */
 
-
-/* 
- * Schema version really only tells us the QT data stream format.
- */
-
 const binaryParser = require('binary-parser').Parser;
 const binaryEncoder = require('binary-parser-encoder').Parser;
 
@@ -23,11 +18,6 @@ const DEFAULT_SCHEMA = 3;		// the default schema to encode
 const DEFAULT_VERSION = 2.6;	// the default version to decode/encode
 const DEFAULT_ID = "NODE-JS";	// the default ID of this side of the conversaion
 const WSJTX_MAGIC = 0xadbccbda;	// the WSJT-X magic packet header sequence
-
-
-// Used below in 'choice' sections to select WSJTX or JTDX
-// parsing as JTDX has diverged from WSJTX
-// TODO: Does this still work with JTDX?
 
 // Utility function to print out objects.
 // safely handles circular references
@@ -46,6 +36,20 @@ JSON.safeStringify = (obj, indent = 2) => {
 	cache = null;
 	return retVal;
   };
+
+// Utilitiy functions for working with enumerations
+// get the enum for a given value
+function keyForValue(enumType, value) {	// returns key for enum value
+	for (const key in enumType) {
+		if (typeof(enumType[key]) == 'number' && enumType[key] == value) {
+			return key;
+		}
+	}
+	return '';
+}
+function valueForKey(enumType, key) {		// returns code for key
+	return enumType.hasOwnProperty(key) ? enumType[key] : null;
+}	
 
 // a parser that parses nothing
 const nullParser = new binaryParser();
@@ -149,18 +153,7 @@ const messageType = {
 	logged_adif: 12,
 	highlight_callsign: 13,
 	switch_configuration: 14,
-	configure: 15,
-	format: function(code) {	// returns key for code
-		for (const key in messageType) {
-			if (typeof(messageType[key]) == 'number' && messageType[key] == code) {
-				return key;
-			}
-		}
-		return '';
-	},
-	encode: function(key) {		// returns code for key
-		return messageType.hasOwnProperty(key) ? messageType[key] : null;
-	}	
+	configure: 15
 };
 
 // Defined reply modifiers.
@@ -172,17 +165,6 @@ const replyModifier = {
 	windows: 0x10,	// windows key on windows
 	keypad: 0x20,	// keypad or arrows
 	group: 0x40,	// group switch X11 only
-	format: function(code) {	// returns key for code
-		for (const key in replyModifier) {
-			if (typeof(replyModifier[key]) == 'number' && replyModifier[key] == code) {
-				return key;
-			}
-		}
-		return '';
-	},
-	encode: function(key) {		// returns code for key
-		return replyModifier.hasOwnProperty(key) ? replyModifier[key] : null;
-	}	
 };
 
 // Defined status operation modes
@@ -196,18 +178,7 @@ const statusOperationMode = {
 	ww_digi: 5,
 	fox: 6,
 	hound: 7,
-	arrl_digi: 8,
-	format: function(code) {	// returns key for code
-		for (const key in statusOperationMode) {
-			if (typeof(statusOperationMode[key]) == 'number' && statusOperationMode[key] == code) {
-				return key;
-			}
-		}
-		return 'unknown';
-	},
-	encode: function(key) {		// returns code for key
-		return statusOperationMode.hasOwnProperty(key) ? statusOperationMode[key] : null;
-	}	
+	arrl_digi: 8
 };
 
 // *** Parsers for WSJT-X Datagrams ***
@@ -279,6 +250,8 @@ class WSJTXParser {
 		.nest('sub_mode', { type: stringParser, formatter: stringFormatter })
 		.uint8('fast_mode', { formatter: boolFormatter })
 
+	// TODO: v2.1 statusEncoder
+
 	// Out since v2.0
 	decodeParser = new binaryParser()
 		.endianess('big')
@@ -294,6 +267,8 @@ class WSJTXParser {
 		.nest('message', { type: stringParser, formatter: stringFormatter })
 		.uint8('low_confidence')
 		.uint8('off_air');
+
+	// TODO: v2.1 decodeEncoder
 
 	// Out/In since v2.0
 	// Not sent from WSJTX
@@ -320,7 +295,9 @@ class WSJTXParser {
 		.nest('mode', { type: stringParser, formatter: stringFormatter })
 		.nest('message', { type: stringParser, formatter: stringFormatter })
 		.uint8('low_confidence')
-		.uint8('modifiers', { formatter: replyModifier.format });
+		.uint8('modifiers', { 
+			formatter: function(v) { return keyForValue(replyModifier, v); }
+		});
 
 	replyFields = [...this.baseFields, 'time', 'snr', 'delta_time', 'delta_frequency', 'mode', 'message', 'low_confidence', 'modifiers'];
 	replyEncoder = new binaryEncoder()
@@ -352,6 +329,8 @@ class WSJTXParser {
 		.nest('operator_call', { type: stringParser, formatter: stringFormatter })
 		.nest('my_call', { type: stringParser, formatter: stringFormatter })
 		.nest('my_grid', { type: stringParser, formatter: stringFormatter })
+
+	// TODO: v2.1 qsoLoggedEncoder
 
 	// Out since v2.0
 	closeParser = new binaryParser()
@@ -404,6 +383,8 @@ class WSJTXParser {
 		.uint32('power')
 		.uint8('off_air');
 
+	// TODO: v2.1 wsprDecodeEncoder
+
 	// In (untested) since v2.0
 	locationParser = new binaryParser()
 		.endianess('big')
@@ -419,6 +400,8 @@ class WSJTXParser {
 	loggedAdifParser = new binaryParser()
 		.endianess('big')
 		.nest('adif_text', { type: stringParser, formatter: stringFormatter });
+
+	// TODO: v2.1 loggedAdifEncoder
 
 	// color parser used in call sign operations (below)
 	// (untested) parses colors
@@ -547,9 +530,13 @@ class WSJTXParser_v200 extends WSJTXParser {
 	statusParser = this.statusParser
 		.uint8('special_operation_mode', { formatter: statusOperationMode.format })
 
+	// TODO: v2.1 statusEncoder (v200)
+
 	qsoLoggedParser = this.qsoLoggedParser
 		.nest('exchange_sent', { type: stringParser, formatter: stringFormatter })
 		.nest('exchange_received', { type: stringParser, formatter: stringFormatter });
+
+	// TODO: v2.1 qsoLoggedEncoder (v200)
 }
 
 // For WSJT-X >= v2.1.0
@@ -560,16 +547,19 @@ class WSJTXParser_v210 extends WSJTXParser_v200 {
 		.nest(null, { type: this.baseEncoder })
 		.endianess('big');
 
-	//
 	statusParser = this.statusParser
 		.uint32('frequency_tolerance', { formatter: maxUnit32Formatter })
 		.uint32('tr_period', { formatter: maxUnit32Formatter })
 		.nest('configuration_name', { type: stringParser, formatter: stringFormatter })
 
+	// TODO: v2.1 qsoLoggedEncoder (v210)
+
 	// In (untested) since v2.1
 	swicthConfigurationParser = new binaryParser()
 		.endianess('big')
 		.nest('configuration_name', { type: stringParser, formatter: stringFormatter });
+
+	// TODO: v2.1 swicthConfigurationEncoder (v210)
 
 	// In (untested) since v2.1
 	configureParser = new binaryParser()
@@ -583,6 +573,8 @@ class WSJTXParser_v210 extends WSJTXParser_v200 {
 		.nest('dx_call', { type: stringParser, formatter: stringFormatter })
 		.nest('dx_grid', { type: stringParser, formatter: stringFormatter })
 		.uint8('generate_messages', { formatter: boolFormatter });
+
+	// TODO: v2.1 configureEncoder (v210)
 
 	// Core WSJT-X decoder/parser, uses other sub-parsers depending on 'type'
 	parser = new binaryParser()
@@ -621,14 +613,20 @@ class WSJTXParser_v230 extends WSJTXParser_v210 {
 	statusParser = this.statusParser
 		.nest('tx_message', { type: stringParser, formatter: stringFormatter });
 
+	// TODO: v2.1 statusEncoder (v230)
+
 	qsoLoggedParser = this.qsoLoggedParser
 		.nest('adif_propogation_mode', { type: stringParser, formatter: stringFormatter });
+
+	// TODO: v2.1 qsoLoggedEncoder (v230)
 }
 
 // For JTDX (untested)
 class JTDXParser extends WSJTXParser_v210 {
 	statusParser = this.statusParser
 		.uint8('tx_first', { formatter: boolFormatter });
+
+	// TODO: v2.1 statsEncoder (JTDX)
 }
 
 // Heuristically attempt decoding common WSJT-X exchange messages
@@ -686,8 +684,12 @@ function getParser(version_string, schema) {
 // Public: Decode a Buffer of data (from a UDP datagram) into an object
 // with keys and values representing the parsed data.
 function decode(buffer, version=DEFAULT_VERSION, schema=DEFAULT_SCHEMA) {
+
+	// TOD: Graceful degredataion of decoding when version not specified.
+	// If the parse fails with a high version number try a lower version.
+
 	const decoded = getParser(version, schema).decode(buffer);
-	decoded.type = messageType.format(decoded.type);
+	decoded.type = keyForValue(messageType, decoded.type);
 
 	if (decoded.hasOwnProperty('message')) {
 		const message_decode = decode_exchange(decoded.message);
