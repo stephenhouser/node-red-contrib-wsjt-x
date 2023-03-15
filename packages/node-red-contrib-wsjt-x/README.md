@@ -12,7 +12,9 @@ To *send* commands to WSJT-X you will need to identify the IP address and port n
 
 ## WSJT-X Encoding Work-in-progrss (v2.0)
 
-Currently the encoder only implements a subseet of the commands that can be sent to WSJT-X. They are as follows:
+While I have a goal of being able to encode *all* the WSJT-X messages, the priority is to complete the ones that WSJT-X accepts as input first. See the [WSJT-X Source Code](* https://github.com/roelandjansen/wsjt-x/blob/master/NetworkMessage.hpp). 
+
+The commands that can be encoded are as follows:
 
 - **clear**: `{"window":2}`
 - **heartbeat**: `{"max_schema_number":3,"version":"2.6.1","revision":""}`
@@ -38,5 +40,3 @@ Currently the encoder only implements a subseet of the commands that can be sent
         "generate_messages": true
     }
 ```
-
-Future versions will have encoders for all the WSJT-X messages. Yes, this means you would be able to have a flow that looks like an instance of WSJT-X!
