@@ -39,12 +39,12 @@ module.exports = function(RED) {
 			}
 
 			// Add WSJT-X Id from node configuration if there is not one given in the payload
-			if (!('id' in encode_msg.payload)) {
-				encode_msg.payload['id'] = node.wsjtx_id;
+			if (!('id' in msg.payload)) {
+				msg.payload['id'] = node.wsjtx_id;
 			}
 
 			msg.input = msg.payload;
-			msg.payload = wsjtx.encode(msg, node.wsjtx_version, node.wsjtx_schema);
+			msg.payload = wsjtx.encode(msg.payload, node.wsjtx_version, node.wsjtx_schema);
 
 			// Send off the result without modifying the original message.
 			if (msg.payload && send) {

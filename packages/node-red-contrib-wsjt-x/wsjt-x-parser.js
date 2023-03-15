@@ -135,26 +135,6 @@ function maxUnit32Formatter(value) {
 	return value === 0xffffffff ? null : value;
 }
 
-// Defined message types that WSJT-X will send and that we understand.
-// provides a method for us to translate between the name and the coded number.
-const messageType = {
-	heartbeat: 0,
-	status: 1,
-	decode: 2,
-	clear: 3,
-	reply: 4,
-	qso_logged: 5,
-	close: 6,
-	replay: 7,
-	halt_tx: 8,
-	free_text: 9,
-	wspr_decode: 10,
-	location: 11,
-	logged_adif: 12,
-	highlight_callsign: 13,
-	switch_configuration: 14,
-	configure: 15
-};
 
 // Defined reply modifiers.
 // provides a method for us to translate between the name and the coded number.
@@ -191,6 +171,27 @@ class WSJTXParser {
 	constructor(schema=DEFAULT_SCHEMA) {
 		this.schema = schema;
 	}
+
+	// Defined message types that WSJT-X will send and that we understand.
+	// provides a method for us to translate between the name and the coded number.
+	messageType = {
+		heartbeat: 0,
+		status: 1,
+		decode: 2,
+		clear: 3,
+		reply: 4,
+		qso_logged: 5,
+		close: 6,
+		replay: 7,
+		halt_tx: 8,
+		free_text: 9,
+		wspr_decode: 10,
+		location: 11,
+		logged_adif: 12,
+		highlight_callsign: 13,
+		switch_configuration: 14,
+		configure: 15
+	};
 
 	// baseParser and baseFields
 
@@ -295,9 +296,7 @@ class WSJTXParser {
 		.nest('mode', { type: stringParser, formatter: stringFormatter })
 		.nest('message', { type: stringParser, formatter: stringFormatter })
 		.uint8('low_confidence')
-		.uint8('modifiers', { 
-			formatter: function(v) { return keyForValue(replyModifier, v); }
-		});
+		.uint8('modifiers', { formatter: v => keyForValue(replyModifier, v) });
 
 	replyFields = [...this.baseFields, 'time', 'snr', 'delta_time', 'delta_frequency', 'mode', 'message', 'low_confidence', 'modifiers'];
 	replyEncoder = new binaryEncoder()
@@ -362,8 +361,16 @@ class WSJTXParser {
 	freeTextFields = [...this.baseFields, 'text', 'send'];
 	freeTextEncoder =  new binaryEncoder()
 		.nest(null, { type: this.baseEncoder })
-		.uint32('text_length', { encoder: function(str, obj) { return obj['text'].length; } })
-		.string('text', { length: 'text_length' })	
+		// handle special case where we can send a null string
+		.uint32('text_length', { encoder: 
+			function(str, obj) { return obj['text'] ? obj['text'].length : 0; } 
+		})
+		.string('text', { 
+			length: 'text_length',
+			encoder: function(str, obj) {
+				return str ? str : "";
+			} 
+		})	
 		.uint8('send');
 	
 	// Out (untested) since v2.0
@@ -483,11 +490,15 @@ class WSJTXParser {
 		'heartbeat': 	[this.heartbeatEncoder, this.heartbeatFields],
 		'reply':  		[this.replyEncoder, this.replyFields],
 		'halt_tx': 		[this.haltTxEncoder, this.haltTxFields],
+		'replay':		[this.replayEncoder, this.replayFields],
+		'free_text':	[this.freeTextEncoder, this.freeTextFields],
+		'location':		[this.locationEncoder, this.locationFields],
+		'highlight_callsign': [this.highlightCallsignEncoder, this.highlightCallsignFields]
 	};
 
 	// Encode message (object) to a buffer which can be sent as a WSJT-X UDP datagram
 	encode(msg) {
-		const type_code = messageType.encode(msg.type);
+		const type_code = valueForKey(this.messageType, msg.type);
 		if (type_code < 0) {
 			throw new Error(`Invalid WSJT-X message type: ${msg.type}`);
 		}
@@ -528,7 +539,7 @@ class WSJTXParser {
 // For WSJT-X >= v2.0.0 
 class WSJTXParser_v200 extends WSJTXParser {
 	statusParser = this.statusParser
-		.uint8('special_operation_mode', { formatter: statusOperationMode.format })
+		.uint8('special_operation_mode', { formatter: v => keyForValue(statusOperationMode, v) });
 
 	// TODO: v2.1 statusEncoder (v200)
 
@@ -688,8 +699,9 @@ function decode(buffer, version=DEFAULT_VERSION, schema=DEFAULT_SCHEMA) {
 	// TOD: Graceful degredataion of decoding when version not specified.
 	// If the parse fails with a high version number try a lower version.
 
-	const decoded = getParser(version, schema).decode(buffer);
-	decoded.type = keyForValue(messageType, decoded.type);
+	const parser = getParser(version, schema);
+	const decoded = parser.decode(buffer);
+	decoded.type = keyForValue(parser.messageType, decoded.type);
 
 	if (decoded.hasOwnProperty('message')) {
 		const message_decode = decode_exchange(decoded.message);
