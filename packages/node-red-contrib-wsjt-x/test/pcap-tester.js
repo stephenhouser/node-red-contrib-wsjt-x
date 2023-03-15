@@ -6,6 +6,7 @@ let packet_n = 0;
 
 const ignore_types = [];
 //const ignore_types = ['status', 'decode', 'heartbeat'];
+// const ignore_types = ['status', 'heartbeat'];
 
 
 function buffer2hex(buffer) {
@@ -15,13 +16,22 @@ function buffer2hex(buffer) {
 }
 
 async function test_packet(datagram, packet) {
+	console.log(`\n\nPacket #${packet_n}: ${packet.payload.payload}`);
+
+	const ignore_codes = [];
+
+	if (ignore_codes.includes(datagram.data[11])) {
+		return;
+	}
+
+	console.log(buffer2hex(datagram.data));
+	console.log(`type=${datagram.data[11]}`)
+
 	const decoded = wsjtx.decode(datagram.data);
 	if (ignore_types.includes(decoded.type)) {
 		return;
 	}
 
-	console.log(`\n\nPacket #${packet_n}: ${packet.payload.payload}`);
-	console.log(buffer2hex(datagram.data));
 	console.log(decoded);
 }	
 

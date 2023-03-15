@@ -24,7 +24,7 @@ module.exports = function(RED) {
 			const decoded = wsjtx.decode(msg.payload);
 			if (decoded && send) {
 				msg.payload = decoded;
-				msg.topic = decoded.type;
+				msg.topic = `${decoded.id}/${decoded.type}`;
 				send(msg);
 			}
 

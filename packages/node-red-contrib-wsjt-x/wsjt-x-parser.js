@@ -24,24 +24,24 @@ const WSJTX_MAGIC = 0xadbccbda;	// the WSJT-X magic packet header sequence
 JSON.safeStringify = (obj, indent = 2) => {
 	let cache = [];
 	const retVal = JSON.stringify(
-	  obj,
-	  (key, value) =>
-		typeof value === "object" && value !== null
-		  ? cache.includes(value)
-			? undefined // Duplicate reference found, discard key
-			: cache.push(value) && value // Store value in our collection
-		  : value,
-	  indent
+		obj,
+		(key, value) =>
+			typeof value === "object" && value !== null
+				? cache.includes(value)
+					? undefined // Duplicate reference found, discard key
+					: cache.push(value) && value // Store value in our collection
+				: value,
+		indent
 	);
 	cache = null;
 	return retVal;
-  };
+};
 
 // Utilitiy functions for working with enumerations
 // get the enum for a given value
 function keyForValue(enumType, value) {	// returns key for enum value
 	for (const key in enumType) {
-		if (typeof(enumType[key]) == 'number' && enumType[key] == value) {
+		if (typeof (enumType[key]) == 'number' && enumType[key] == value) {
 			return key;
 		}
 	}
@@ -49,7 +49,7 @@ function keyForValue(enumType, value) {	// returns key for enum value
 }
 function valueForKey(enumType, key) {		// returns code for key
 	return enumType.hasOwnProperty(key) ? enumType[key] : null;
-}	
+}
 
 // a parser that parses nothing
 const nullParser = new binaryParser();
@@ -57,7 +57,7 @@ const nullParser = new binaryParser();
 // parses length (uint32) prefixed-strings
 const stringParser = new binaryParser()
 	.uint32('length', {
-		formatter: function(len) {
+		formatter: function (len) {
 			return len === 0xffffffff ? 0 : len;
 		}
 	})
@@ -75,7 +75,7 @@ const dateTimeParser = new binaryParser()
 	.uint64('day')
 	.uint32('time')
 	.uint8('timespec', {
-		formatter: function(t) {
+		formatter: function (t) {
 			switch (t) {
 				case 0: return 'local';
 				case 1: return 'utc';
@@ -91,23 +91,28 @@ const dateTimeParser = new binaryParser()
 			2: new binaryParser().uint32('offset'),
 		}
 	})
-	.nest('datetime_decode', { type: nullParser, formatter: function(s) {
-		const unixtime = (parseFloat(this.day) - 2440587.5) * 86400000;
-		var thedate = new Date(unixtime)
-		thedate.setUTCHours(0, 0, 0, 0)
-		fixed = new Date(thedate.valueOf() + this.time)
-		return fixed.toISOString();
-	}})
-	;
+	.nest('datetime_decode', {
+		type: nullParser,
+		formatter: function (s) {
+			// converts julain day and time to UTC timestamp
+			const unixtime = (parseFloat(this.day) - 2440587.5) * 86400000;
+			var gregorian_day = new Date(unixtime)
+			gregorian_day.setUTCHours(0, 0, 0, 0)
+
+			const timestamp = new Date(gregorian_day.valueOf() + this.time)
+			return timestamp.toISOString();
+		}
+	});
 
 // Times in WSJT-X are milli-seconds since midnight UTC
 // This creates a datetime object using today as date
 // This is not accurate for packet captures and replay of old data.
-function toISODateString(t) {
-	var d = new Date();
-	d.setUTCHours(0, 0, 0, 0);
-	d = new Date(d.valueOf() + t);
-	return d.toISOString();
+function toISODateString(ms_since_midnight) {
+	var today = new Date();
+	today.setUTCHours(0, 0, 0, 0);
+
+	const timestamp = new Date(today.valueOf() + ms_since_midnight);
+	return timestamp.toISOString();
 }
 
 // format a boolean value for JavaScript
@@ -117,7 +122,7 @@ function boolFormatter(b) {
 
 // encode a boolean value
 function boolEncoder(b) {
-	if (typeof(b) == 'string') {
+	if (typeof (b) == 'string') {
 		return b == 'true' ? 1 : 0;
 	}
 
@@ -130,11 +135,15 @@ function numberFormatter(n) {
 	return isNaN(n_string) ? n_string : Number(n_string);
 }
 
-// for uint32 numbers that can have a null value
-function maxUnit32Formatter(value) {
+// for uint32 numbers that can have a null value, WSJT-X specifies MAX_INT
+function maxUint32Formatter(value) {
 	return value === 0xffffffff ? null : value;
 }
 
+// to encode a null value as MAX_INT
+function maxUint32Encoder(value) {
+	return value == null ? 0xffffffff : value;
+}
 
 // Defined reply modifiers.
 // provides a method for us to translate between the name and the coded number.
@@ -168,7 +177,7 @@ const statusOperationMode = {
 // encode for newer versions.
 // Our base class is approximately WSJT-X v1.9 or so.
 class WSJTXParser {
-	constructor(schema=DEFAULT_SCHEMA) {
+	constructor(schema = DEFAULT_SCHEMA) {
 		this.schema = schema;
 	}
 
@@ -189,50 +198,50 @@ class WSJTXParser {
 		location: 11,
 		logged_adif: 12,
 		highlight_callsign: 13,
-		switch_configuration: 14,
-		configure: 15
 	};
 
 	// baseParser and baseFields
 
 	// Decodes only the minimal required WSJT-X fields.
 	// Used when the full decoder fails and we want some results.
+	baseFields = ['magic', 'schema', 'type', 'id'];
 	baseParser = new binaryParser()
 		.endianess('big')
 		.uint32('magic', { assert: WSJTX_MAGIC })
-		.uint32('schema', { assert: function(version) {
-			return version >= 0x02 
-		}})
+		.uint32('schema', { assert: version => version >= 0x02 })
 		.uint32('type')
-		.nest('id', { type: stringParser, formatter: stringFormatter })
+		.nest('id', {type: stringParser, formatter: stringFormatter })
+		;
 
 	// Used to encode beginning of each message, not used for parsing
-	baseFields = ['magic', 'schema', 'type', 'id'];
 	baseEncoder = new binaryEncoder()
 		.endianess('big')
 		.uint32('magic')
 		.uint32('schema')
 		.uint32('type')
-		.uint32('length', { encoder: function(str, obj) { return obj['id'].length; } })
-		.string('id', { length: 'length' });
+		.uint32('id_length', { encoder: (val, obj) => obj['id'].length })
+		.string('id', { length: 'id_length' })
+		;
 
 	// Heartbeat Out/In since v2.0
-	heartbeatFields = [...this.baseFields, 'max_schema_number', 'version', 'revision'];
+	heartbeatFields = ['max_schema_number', 'version', 'revision'];
 	heartbeatParser = new binaryParser()
-		.endianess('big')
 		.uint32('max_schema_number')
 		.nest('version', { type: stringParser, formatter: stringFormatter })
-		.nest('revision', { type: stringParser, formatter: stringFormatter });
+		.nest('revision', { type: stringParser, formatter: stringFormatter })
+		;
 
 	heartbeatEncoder = new binaryEncoder()
 		.nest(null, { type: this.baseEncoder })
 		.uint32('max_schema_number')
-		.uint32('ver_length', { encoder: function(str, obj) { return obj['version'].length; } })
-		.string('version', { length: 'ver_length'} )
-		.uint32('rev_length', { encoder: function(str, obj) { return obj['revision'].length; } })
-		.string('revision', { length: 'rev_length' });
-		
+		.uint32('ver_length', { encoder: (val, obj) => obj['version'].length })
+		.string('version', { length: 'ver_length' })
+		.uint32('rev_length', { encoder: (val, obj) => obj['revision'].length })
+		.string('revision', { length: 'rev_length' })
+		;
+
 	// Out since v2.0
+	statusFields = [];
 	statusParser = new binaryParser()
 		.uint64('freqency')
 		.nest('mode', { type: stringParser, formatter: stringFormatter })
@@ -250,69 +259,84 @@ class WSJTXParser {
 		.uint8('tx_watchdog', { formatter: boolFormatter })
 		.nest('sub_mode', { type: stringParser, formatter: stringFormatter })
 		.uint8('fast_mode', { formatter: boolFormatter })
+		;
 
-	// TODO: v2.1 statusEncoder
+	statusEncoder = new binaryEncoder()
+		// TODO: v2.1 statusEncoder
+		;
 
 	// Out since v2.0
+	decodeFields = [];
 	decodeParser = new binaryParser()
-		.endianess('big')
 		.uint8('new', { formatter: boolFormatter })
 		.uint32('time')
-		.nest('datetime_decode', { type: nullParser, formatter: function(s) {
-			return toISODateString(this.time);
-		}})
+		.nest('datetime_decode', {
+			type: nullParser,
+			// v => syntax does not give the right this object.
+			formatter: function (s) { return toISODateString(this.time) }
+		})
 		.int32('snr')
 		.doublebe('delta_time')
 		.uint32('delta_frequency')
 		.nest('mode', { type: stringParser, formatter: stringFormatter })
 		.nest('message', { type: stringParser, formatter: stringFormatter })
 		.uint8('low_confidence')
-		.uint8('off_air');
+		.uint8('off_air')
+		;
 
-	// TODO: v2.1 decodeEncoder
+	decodeEncoder = new binaryEncoder()
+		// TODO: v2.1 decodeEncoder
+		;
 
 	// Out/In since v2.0
 	// Not sent from WSJTX
-	clearParser = new binaryParser();
+	clearFields = ['window'];
+	clearParser = new binaryParser()
+		;
 
 	// 0  - clear the "Band Activity" window (default)
-    // 1  - clear the "Rx Frequency" window
-    // 2  - clear both "Band Activity" and "Rx Frequency" windows
-	clearFields = [...this.baseFields, 'window'];
+	// 1  - clear the "Rx Frequency" window
+	// 2  - clear both "Band Activity" and "Rx Frequency" windows
 	clearEncoder = new binaryEncoder()
 		.nest(null, { type: this.baseEncoder })
-		.uint8('window');
+		.uint8('window')
+		;
 
 	// In (untested) since v2.0
+	replyFields = ['time', 'snr', 'delta_time', 'delta_frequency', 'mode',
+					'message', 'low_confidence', 'modifiers'];
 	replyParser = new binaryParser()
-		.endianess('big')
 		.uint32('time')
-		.nest('datetime_decode', { type: nullParser, formatter: function(s) {
-			return toISODateString(this.time);
-		}})
+		.nest('datetime_decode', {
+			type: nullParser,
+			// v => syntax does not give the right this object.
+			formatter: function (s) { return toISODateString(this.time) }
+		})
 		.int32('snr')
 		.doublebe('delta_time')
 		.uint32('delta_frequency')
 		.nest('mode', { type: stringParser, formatter: stringFormatter })
 		.nest('message', { type: stringParser, formatter: stringFormatter })
 		.uint8('low_confidence')
-		.uint8('modifiers', { formatter: v => keyForValue(replyModifier, v) });
+		.uint8('modifiers', { formatter: val => keyForValue(replyModifier, val) })
+		;
 
-	replyFields = [...this.baseFields, 'time', 'snr', 'delta_time', 'delta_frequency', 'mode', 'message', 'low_confidence', 'modifiers'];
 	replyEncoder = new binaryEncoder()
 		.nest(null, { type: this.baseEncoder })
 		.uint32('time')
 		.int32('snr')
 		.doublebe('delta_time')
 		.uint32('delta_frequency')
-		.uint32('mode_length', { encoder: function(str, obj) { return obj['mode'].length; } })
-		.string('mode', { length: 'mode_length'} )
-		.uint32('msg_length', { encoder: function(str, obj) { return obj['message'].length; } })
-		.string('message', { length: 'msg_length' })
+		.uint32('mode_length', { encoder: (val, obj) => obj['mode'].length })
+		.string('mode', { length: 'mode_length' })
+		.uint32('message_length', { encoder: (val, obj) => obj['message'].length })
+		.string('message', { length: 'message_length' })
 		.uint8('low_confidence')
-		.uint8('modifiers');
+		.uint8('modifiers')
+		;
 
 	// Out since v2.0
+	qsoLoggedFields = [];
 	qsoLoggedParser = new binaryParser()
 		.nest('date_time_on', { type: dateTimeParser })
 		.nest('dx_call', { type: stringParser, formatter: stringFormatter })
@@ -328,59 +352,63 @@ class WSJTXParser {
 		.nest('operator_call', { type: stringParser, formatter: stringFormatter })
 		.nest('my_call', { type: stringParser, formatter: stringFormatter })
 		.nest('my_grid', { type: stringParser, formatter: stringFormatter })
+		;
 
-	// TODO: v2.1 qsoLoggedEncoder
+	qsoLoggedEncoder = new binaryEncoder()
+		// TODO: v2.1 qsoLoggedEncoder
+		;
 
 	// Out since v2.0
 	closeParser = new binaryParser()
-		.endianess('big');
-
-	// In (untested) since v2.0
-	replayParser = new binaryParser();
-
-	replayFields = [...this.baseFields];
-	replayEncoder =  new binaryEncoder()
-		.nest(null, { type: this.baseEncoder })
+		;
 
 	// In since v2.0
+	replayFields = [];
+	replayParser = new binaryParser()
+		;
+
+	replayEncoder = new binaryEncoder()
+		.nest(null, { type: this.baseEncoder })
+		;
+
+	// In since v2.0
+	haltTxFields = ['auto_tx_only'];
 	haltTxParser = new binaryParser()
-		.endianess('big')
-		.uint8('auto_tx_only', { formatter: boolFormatter });
+		.uint8('auto_tx_only', { formatter: boolFormatter })
+		;
 
-	haltTxFields = [...this.baseFields, 'auto_tx_only'];
-	haltTxEncoder =  new binaryEncoder()
+	haltTxEncoder = new binaryEncoder()
 		.nest(null, { type: this.baseEncoder })
-		.uint8('auto_tx_only', { encoder: boolEncoder });
+		.uint8('auto_tx_only', { encoder: boolEncoder })
+		;
 
-	// In (untested) since v2.0
+	// In since v2.0
+	freeTextFields = ['text', 'send'];
 	freeTextParser = new binaryParser()
-		.endianess('big')
 		.nest('text', { type: stringParser, formatter: stringFormatter })
-		.uint8('send', { formatter: boolFormatter });
+		.uint8('send', { formatter: boolFormatter })
+		;
 
-	freeTextFields = [...this.baseFields, 'text', 'send'];
-	freeTextEncoder =  new binaryEncoder()
+	freeTextEncoder = new binaryEncoder()
 		.nest(null, { type: this.baseEncoder })
-		// handle special case where we can send a null string
-		.uint32('text_length', { encoder: 
-			function(str, obj) { return obj['text'] ? obj['text'].length : 0; } 
+		.uint32('text_length', {	
+			// handle special case where we can send a null string
+			encoder: (val, obj) => (obj['text'] && obj['text'].length) ? obj['text'].length : 0
 		})
-		.string('text', { 
-			length: 'text_length',
-			encoder: function(str, obj) {
-				return str ? str : "";
-			} 
-		})	
-		.uint8('send');
-	
+		.string('text', { length: 'text_length', encoder: (val, obj) => val ? val : "" })
+		.uint8('send')
+		;
+
 	// Out (untested) since v2.0
+	wsprDecodeFields = [];
 	wsprDecodeParser = new binaryParser()
-		.endianess('big')
 		.uint8('new', { formatter: boolFormatter })
 		.uint32('time')
-		.nest('datetime_decode', { type: nullParser, formatter: function(s) {
-			return toISODateString(this.time);
-		}})		
+		.nest('datetime_decode', {
+			type: nullParser,
+			// v => syntax does not give the right this object.
+			formatter: function (s) { return toISODateString(this.time) }
+		})
 		.int32('snr')
 		.doublebe('delta_time')
 		.uint64('frequency')
@@ -388,27 +416,35 @@ class WSJTXParser {
 		.nest('callsign', { type: stringParser, formatter: stringFormatter })
 		.nest('grid', { type: stringParser, formatter: stringFormatter })
 		.uint32('power')
-		.uint8('off_air');
+		.uint8('off_air')
+		;
 
-	// TODO: v2.1 wsprDecodeEncoder
+	wsprDecodeEncoder = new binaryEncoder()
+		// TODO: v2.1 wsprDecodeEncoder
+		;
 
-	// In (untested) since v2.0
+	// In since v2.0
+	locationFields = ['location'];
 	locationParser = new binaryParser()
-		.endianess('big')
-		.nest('location', { type: stringParser, formatter: stringFormatter });
+		.nest('location', { type: stringParser, formatter: stringFormatter })
+		;
 
-	locationFields = [...this.baseFields, 'location'];
-	locationEncoder =  new binaryEncoder()
+	locationEncoder = new binaryEncoder()
 		.nest(null, { type: this.baseEncoder })
-		.uint32('location_length', { encoder: function(str, obj) { return obj['location'].length; } })
-		.string('location', { length: 'location_length' });
-	
-	// Out since v2.0
-	loggedAdifParser = new binaryParser()
-		.endianess('big')
-		.nest('adif_text', { type: stringParser, formatter: stringFormatter });
+		.uint32('location_length', { encoder: (str, obj) => obj['location'].length })
+		.string('location', { length: 'location_length' })
+		;
 
-	// TODO: v2.1 loggedAdifEncoder
+	// Out since v2.0
+	loggedAdifFields = ['adif_text'];
+	loggedAdifParser = new binaryParser()
+		.nest('adif_text', { type: stringParser, formatter: stringFormatter })
+		;
+
+	loggedAdifEncoder = new binaryEncoder()
+		.uint32('adif_text_length', { encoder: (str, obj) => obj['adif_text'].length })
+		.string('adif_text', { length: 'adif_text_length' })
+		;
 
 	// color parser used in call sign operations (below)
 	// (untested) parses colors
@@ -418,28 +454,30 @@ class WSJTXParser {
 		.uint16('red')
 		.uint16('green')
 		.uint16('blue')
-		.uint16('pad');
+		.uint16('pad')
+		;
 
 	// In (untested) since v2.0
+	highlightCallsignFields = ['background_color', 'foreground_color', 'highlight_last'];
 	highlightCallsignParser = new binaryParser()
-		.endianess('big')
 		.nest('background_color', { type: this.colorParser })
 		.nest('foreground_color', { type: this.colorParser })
-		.uint8('highlight_last', { formatter: boolFormatter });
+		.uint8('highlight_last', { formatter: boolFormatter })
+		;
 
-	highlightCallsignFields = [...this.baseFields, 'background_color', 'foreground_color', 'highlight_last'];
-	highlightCallsignEncoder =  new binaryEncoder()
+	highlightCallsignEncoder = new binaryEncoder()
 		.nest(null, { type: this.baseEncoder })
 		// .nest('background_color', { type: this.colorParser })
 		// .nest('foreground_color', { type: this.colorParser })
-		// .uint8('highlight_last', { formatter: boolFormatter });
-		
+		// .uint8('highlight_last', { formatter: boolFormatter })
+		;
+
 	// Core WSJT-X decoder/parser, uses other sub-parsers depending on 'type'
 	parser = new binaryParser()
 		.nest(null, { type: this.baseParser })
 		.choice(null, {
 			tag: 'type',
-			defaultChoice: new binaryParser(),
+			defaultChoice: nullParser,
 			choices: {
 				0: this.heartbeatParser,
 				1: this.statusParser,
@@ -460,15 +498,19 @@ class WSJTXParser {
 
 	// Decode or parse a buffer from a WSJT-X UDP datagram into message (object)
 	decode(buffer) {
-		return this.parser.parse(buffer)
+		if (!buffer) {
+			throw new Error('No buffer given to decode');
+		}
+
+		return this.parser.parse(buffer);
 	}
-	
+
 	// Checks that msg has keys that match everything in field_list
 	// returns the fields that are missing or an empty list
 	// used prior to trying to encode a datagram to make sure all the
 	// fields a present.
 	checkFields(msg, field_list) {
-		const missing_fields = [...field_list];
+		const missing_fields = [...this.baseFields, ...field_list];
 		Object.keys(msg).forEach(key => {
 			const idx = missing_fields.indexOf(key);
 			if (idx > -1) {
@@ -486,14 +528,15 @@ class WSJTXParser {
 	// encoder is the binary-parser-encoder to encode the data
 	// required-fields are the fields that must be present to encode the datagram
 	encoders = {
-		'clear': 		[this.clearEncoder, this.clearFields],
-		'heartbeat': 	[this.heartbeatEncoder, this.heartbeatFields],
-		'reply':  		[this.replyEncoder, this.replyFields],
-		'halt_tx': 		[this.haltTxEncoder, this.haltTxFields],
-		'replay':		[this.replayEncoder, this.replayFields],
-		'free_text':	[this.freeTextEncoder, this.freeTextFields],
-		'location':		[this.locationEncoder, this.locationFields],
-		'highlight_callsign': [this.highlightCallsignEncoder, this.highlightCallsignFields]
+		'clear': [this.clearEncoder, this.clearFields],
+		'heartbeat': [this.heartbeatEncoder, this.heartbeatFields],
+		'reply': [this.replyEncoder, this.replyFields],
+		'halt_tx': [this.haltTxEncoder, this.haltTxFields],
+		'replay': [this.replayEncoder, this.replayFields],
+		'free_text': [this.freeTextEncoder, this.freeTextFields],
+		'location': [this.locationEncoder, this.locationFields],
+		'logged_adif': [this.loggedAdifEncoder, this.loggedAdifFields],
+		'highlight_callsign': [this.highlightCallsignEncoder, this.highlightCallsignFields],
 	};
 
 	// Encode message (object) to a buffer which can be sent as a WSJT-X UDP datagram
@@ -510,13 +553,13 @@ class WSJTXParser {
 		// make a copy with defaults so we don't modify the original
 		const encode_msg = {
 			...msg,
-			'magic':  WSJTX_MAGIC,
+			'magic': WSJTX_MAGIC,
 			'type': type_code
 		};
 
 		// add missing fields that can have defaults
 		if (!encode_msg.hasOwnProperty('schema')) {
-			encode_msg['schema'] =this.schema;
+			encode_msg['schema'] = this.schema;
 		}
 
 		if (!encode_msg.hasOwnProperty('id')) {
@@ -528,26 +571,34 @@ class WSJTXParser {
 		// just by adding to the encoders table.
 		const [encoder, fields] = this.encoders[msg.type];
 		const missing = this.checkFields(encode_msg, fields);
-		if (missing.length <= 0) {
-			return encoder.encode(encode_msg);
+		if (missing.length > 0) {
+			throw new Error(`Missing fields [${missing}] in message to be encoded`);
 		}
 
-		throw new Error(`Missing fields [${missing}] in message to be encoded`);
+		return encoder.encode(encode_msg);
 	}
 }
 
 // For WSJT-X >= v2.0.0 
 class WSJTXParser_v200 extends WSJTXParser {
+	statusFields = [...this.statusFields, 'special_operation_mode'];
 	statusParser = this.statusParser
-		.uint8('special_operation_mode', { formatter: v => keyForValue(statusOperationMode, v) });
+		.uint8('special_operation_mode', { formatter: v => keyForValue(statusOperationMode, v) })
+		;
 
-	// TODO: v2.1 statusEncoder (v200)
+	statusEncoder = this.statusEncoder
+		// TODO: v2.1 statusEncoder (v200)
+		;
 
+	qsoLoggedFields = [...this.qsoLoggedFields, 'exchange_sent', 'exchange_received'];
 	qsoLoggedParser = this.qsoLoggedParser
 		.nest('exchange_sent', { type: stringParser, formatter: stringFormatter })
-		.nest('exchange_received', { type: stringParser, formatter: stringFormatter });
+		.nest('exchange_received', { type: stringParser, formatter: stringFormatter })
+		;
 
-	// TODO: v2.1 qsoLoggedEncoder (v200)
+	qsoLoggedEncoder = this.qsoLoggedEncoder
+		// TODO: v2.1 qsoLoggedEncoder (v200)
+		;
 }
 
 // For WSJT-X >= v2.1.0
@@ -556,43 +607,89 @@ class WSJTXParser_v210 extends WSJTXParser_v200 {
 	closeFields = [];
 	closeEncoder = new binaryEncoder()
 		.nest(null, { type: this.baseEncoder })
-		.endianess('big');
+		;
 
+	statusFields = [...this.statusFields, 'frequency_tolerance', 'tr_period', 'configuration_name'];
 	statusParser = this.statusParser
-		.uint32('frequency_tolerance', { formatter: maxUnit32Formatter })
-		.uint32('tr_period', { formatter: maxUnit32Formatter })
+		.uint32('frequency_tolerance', { formatter: maxUint32Formatter })
+		.uint32('tr_period', { formatter: maxUint32Formatter })
 		.nest('configuration_name', { type: stringParser, formatter: stringFormatter })
+		;
 
-	// TODO: v2.1 qsoLoggedEncoder (v210)
+	statusEncoder = this.statusEncoder
+		// TODO: v2.1 qsoLoggedEncoder (v210)
+		;
 
 	// In (untested) since v2.1
+	switchConfigurationFields = ['configuration_name'];
 	swicthConfigurationParser = new binaryParser()
-		.endianess('big')
-		.nest('configuration_name', { type: stringParser, formatter: stringFormatter });
+		.nest('configuration_name', { type: stringParser, formatter: stringFormatter })
+		;
 
-	// TODO: v2.1 swicthConfigurationEncoder (v210)
+	swicthConfigurationEncoder = new binaryEncoder()
+		.nest(null, { type: this.baseEncoder })
+		.uint32('configuration_length', { encoder: (val, obj) => obj['configuration_name'].length })
+		.string('configuration_name', { length: 'configuration_length' })
+		;
 
 	// In (untested) since v2.1
+	configureFields = ['mode', 'frequency_tolerance', 'sub_mode', 'fast_mode', 'tr_period',
+						'rx_df', 'dx_call', 'dx_grid', 'generate_messages'];
 	configureParser = new binaryParser()
-		.endianess('big')
 		.nest('mode', { type: stringParser, formatter: stringFormatter })
-		.uint32('frequency_tolerance', { formatter: maxUnit32Formatter })
+		.uint32('frequency_tolerance', { formatter: maxUint32Formatter })
 		.nest('sub_mode', { type: stringParser, formatter: stringFormatter })
 		.uint8('fast_mode', { formatter: boolFormatter })
-		.uint32('tr_period', { formatter: maxUnit32Formatter })
+		.uint32('tr_period', { formatter: maxUint32Formatter })
 		.uint32('rx_df')
 		.nest('dx_call', { type: stringParser, formatter: stringFormatter })
 		.nest('dx_grid', { type: stringParser, formatter: stringFormatter })
-		.uint8('generate_messages', { formatter: boolFormatter });
+		.uint8('generate_messages', { formatter: boolFormatter })
+		;
 
 	// TODO: v2.1 configureEncoder (v210)
+	configureEncoder = new binaryEncoder()
+		.nest(null, { type: this.baseEncoder })
+		.uint32('mode_length', {	
+			// handle special case where we can send a null string
+			encoder: (val, obj) => (obj['mode'] && obj['mode'].length) ? obj['mode'].length : 0
+		})
+		.string('mode', { length: 'mode_length', encoder: (val, obj) => val ? val : "" })
+		.uint32('frequency_tolerance')
+		.uint32('sub_mode_length', {
+			// handle special case where we can send a null string
+			encoder: (val, obj) => (obj['sub_mode'] && obj['sub_mode'].length) ? obj['sub_mode'].length : 0
+		})
+		.string('sub_mode', { length: 'sub_mode_length', encoder: (val, obj) => val ? val : "" })
+		.uint8('fast_mode')
+		.uint32('tr_period')
+		.uint32('rx_df')
+		.uint32('dx_call_length', {	
+			// handle special case where we can send a null string
+			encoder: (val, obj) => (obj['dx_call'] && obj['dx_call'].length) ? obj['dx_call'].length : 0
+		})
+		.string('dx_call', { length: 'dx_call_length', encoder: (val, obj) => val ? val : "" })
+		.uint32('dx_grid_length', {
+			// handle special case where we can send a null string
+			encoder: (val, obj) => (obj['dx_grid'] && obj['dx_grid'].length) ? obj['dx_grid'].length : 0
+		})
+		.string('dx_grid', { length: 'dx_grid_length', encoder: (val, obj) => val ? val : "" })
+		;
+
+	// Defined message types that WSJT-X will send and that we understand.
+	// provides a method for us to translate between the name and the coded number.
+	messageType = {
+		...this.messageType,
+		switch_configuration: 14,
+		configure: 15
+	};
 
 	// Core WSJT-X decoder/parser, uses other sub-parsers depending on 'type'
 	parser = new binaryParser()
 		.nest(null, { type: this.baseParser })
 		.choice(null, {
 			tag: 'type',
-			defaultChoice: new binaryParser(),
+			defaultChoice: nullParser,
 			choices: {
 				0: this.heartbeatParser,
 				1: this.statusParser,
@@ -616,18 +713,22 @@ class WSJTXParser_v210 extends WSJTXParser_v200 {
 	encoders = {
 		...this.encoders,
 		'close': [this.closeEncoder, this.closeFields],
+		'switch_configuration': [this.swicthConfigurationEncoder, this.switchConfigurationFields],
+		'configure': [this.configureEncoder, this.configureFields],
 	};
 }
 
 // For WSJT-X >= v2.3.0
 class WSJTXParser_v230 extends WSJTXParser_v210 {
 	statusParser = this.statusParser
-		.nest('tx_message', { type: stringParser, formatter: stringFormatter });
+		.nest('tx_message', { type: stringParser, formatter: stringFormatter })
+		;
 
 	// TODO: v2.1 statusEncoder (v230)
 
 	qsoLoggedParser = this.qsoLoggedParser
-		.nest('adif_propogation_mode', { type: stringParser, formatter: stringFormatter });
+		.nest('adif_propogation_mode', { type: stringParser, formatter: stringFormatter })
+		;
 
 	// TODO: v2.1 qsoLoggedEncoder (v230)
 }
@@ -635,7 +736,8 @@ class WSJTXParser_v230 extends WSJTXParser_v210 {
 // For JTDX (untested)
 class JTDXParser extends WSJTXParser_v210 {
 	statusParser = this.statusParser
-		.uint8('tx_first', { formatter: boolFormatter });
+		.uint8('tx_first', { formatter: boolFormatter })
+		;
 
 	// TODO: v2.1 statsEncoder (JTDX)
 }
@@ -677,29 +779,33 @@ function decode_exchange(message) {
 
 // Get the correct parser for a given WSJT-X version and schema
 function getParser(version_string, schema) {
-	if (typeof(version) != 'number') {
+	if (typeof (version) != 'number') {
 		version = parseFloat(version_string);
 	}
 
-	if (version >= 2.3) {
-		return new WSJTXParser_v230(schema);
-	}
+	// if (version >= 2.3) {
+	// 	return new WSJTXParser_v230(schema);
+	// }
 
 	if (version >= 2.1) {
 		return new WSJTXParser_v210(schema);
 	}
 
-	return new WSJTXParser_v200(schema);
+	if (version >= 2.0) {
+		return new WSJTXParser_v200(schema);
+	}
+
+	return new WSJTXParser(schema);
 }
 
 // Public: Decode a Buffer of data (from a UDP datagram) into an object
 // with keys and values representing the parsed data.
-function decode(buffer, version=DEFAULT_VERSION, schema=DEFAULT_SCHEMA) {
+function decode(buffer, version = DEFAULT_VERSION, schema = DEFAULT_SCHEMA) {
 
 	// TOD: Graceful degredataion of decoding when version not specified.
 	// If the parse fails with a high version number try a lower version.
 
-	const parser = getParser(version, schema);
+	const parser = getParser(version, schema);	
 	const decoded = parser.decode(buffer);
 	decoded.type = keyForValue(parser.messageType, decoded.type);
 
@@ -714,9 +820,9 @@ function decode(buffer, version=DEFAULT_VERSION, schema=DEFAULT_SCHEMA) {
 // Public: Enocde object to a UDP-ready buffer
 // Returns a Buffer on success or a string error message.
 // Check the return type!
-function encode(msg, version=DEFAULT_VERSION, schema=DEFAULT_SCHEMA) {
-	// console.log(`Encode:\t${JSON.stringify(msg)}`);
-	const encoded = getParser(version, schema).encode(msg);
+function encode(msg, version = DEFAULT_VERSION, schema = DEFAULT_SCHEMA) {
+	const parser = getParser(version, schema);
+	const encoded = parser.encode(msg);
 	return encoded;
 }
 

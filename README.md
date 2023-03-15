@@ -14,10 +14,29 @@ To *send* commands to WSJT-X you will need to identify the IP address and port n
 
 Currently the encoder only implements a subseet of the commands that can be sent to WSJT-X. They are as follows:
 
-- clear: `{"type":"clear","window":2}`
-- heartbeat: `{"type":"heartbeat","max_schema_number":3,"version":"2.6.1","revision":""}`
-- reply (untested):
-- halt_tx: `{"type":"halt_tx","auto_tx_only":false}`
-- close: `{"type":"close"}`
+- **clear**: `{"window":2}`
+- **heartbeat**: `{"max_schema_number":3,"version":"2.6.1","revision":""}`
+- **reply** (untested): `{}`
+- **halt_tx**: `{"auto_tx_only":false}`
+- **close**: `{}`
+- **replay**: `{}`
+- **free_text**: `{"text": "sample", "send": false}` (text can be `null` to change `send` only)
+- **location**: (broken?) `{"location": "FN43rq"}`
+- **logged_adif**: `{"adif_text": "...adif XML-like stuff..."}`,
+- **switch_configuration**: `{"configuration_name":"IC-705"}`
+- **configure**: (not implemented)
+```
+    {
+        "mode":"FT8",                   // null or emptyis no change
+        "frequency_tolerance": null,    // null is no change 
+        "sub_mode": "",                 // null or emptyis no change
+        "fast_mode": true, 
+        "tr_period": null,              // null is no change
+        "rx_df": null,                  // null is no change
+        "dx_call": null,                // null or emptyis no change 
+        "dx_grid": null,                // null or emptyis no change
+        "generate_messages": true
+    }
+```
 
 Future versions will have encoders for all the WSJT-X messages. Yes, this means you would be able to have a flow that looks like an instance of WSJT-X!
