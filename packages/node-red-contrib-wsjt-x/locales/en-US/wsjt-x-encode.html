@@ -1,0 +1,17 @@
+<script type="text/html" data-help-name="wsjt-x-encode">
+    <p>Encodes messages for <a href="https://www.physics.princeton.edu/pulsar/k1jt/wsjtx.html">WSJT-X</a> communication program and outputs them into the flow. This node is designed to have it's output connected to a UDP Out node which sends the messages to WSJT-X or WSJT-X clients over the local network.</p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+       <dt>payload <span class="property-type">object</span></dt>
+       <dd> The object that specifies the type of message to encode and its associated data.
+        The <code>topic</code> will be the message type (heartbeat, status, decode, etc.) and the 
+       <code>payload</code> will contain the decoded fields for that message type.</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">buffer</span></dt>
+            <dd> A buffer of encoded data suitable for a UDP Out node </dd>
+     </dl>
+</script>

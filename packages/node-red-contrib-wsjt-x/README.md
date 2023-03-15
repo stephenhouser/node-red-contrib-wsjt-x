@@ -5,7 +5,8 @@ A [NodeRed](https://nodered.org) node to handle the decoding and encoding of [WS
 ![Example NodeRed Flow](wsjt-x-decode.png)
 
 To *best* utilize this node in your flow while still being able to use other
-programs (like GridTracker or your logging software) you should configure WSJT-X's Reporting: UDP Server to send to a [multicast address](https://en.wikipedia.org/wiki/Multicast_address). IP addresses `224.0.0.0` to `224.0.0.255` are reserved for local network multicast, thus an IP in this range is a great choice. Then in all the places you want to receive that data, configure those a multicast as well. Within NodeRed's `udp in` node, choose `Listen for: multicast messages` and then configure the same multicast IP address and port that you configured
+programs (like GridTracker or your logging software) you should configure WSJT-X's Reporting: UDP Server to send to a [multicast address](https://en.wikipedia.org/wiki/Multicast_address). IP addresses `224.0.0.0` to `224.0.0.255` are reserved for local network multicast, thus an IP in this range is a great choice. Then in all the places you want to receive that data, configure those a multicast as well. Within NodeRed's `udp in` node, choose `Listen for: multicast messages` 
+and then configure the same multicast IP address and port that you configured
 WSJT-X with.
 
 To *send* commands to WSJT-X you will need to identify the IP address and port number that WSJT-X is using to send data out. This is not the same as the address WSJT-X sends to (above). The easist method is to use a `udp in` node setup to receive data (as above) and use the `msg.ip` and `msg.port` from incoming messages. The `wsjt-x-encode` node can be used to encode messages from your flow into `buffer` objects that a `udp out` node, properly configured, can then send to WSJT-X. You will also have to configure WSJT-X to accept incoming UDP commands, look in *Settings*.
