@@ -145,30 +145,45 @@ function maxUint32Encoder(value) {
 	return value == null ? 0xffffffff : value;
 }
 
-// Defined reply modifiers.
-// provides a method for us to translate between the name and the coded number.
-const replyModifier = {
-	shift: 0x01,	// shift
-	ctrl: 0x02,		// ctrl or CMD
-	alt: 0x04,		// ALT
-	windows: 0x10,	// windows key on windows
-	keypad: 0x20,	// keypad or arrows
-	group: 0x40,	// group switch X11 only
-};
+function formatColor(val) {
+	// Invalid=0, RGB=1, HSV=2, CMYK=3, HSL=4
+	// TODO: formatColor() assumes RGBA color spec everything else is Invalid
+	if (val.colorspec == 0x01) {
+		const color = ((val.red & 0xFF) << 24)
+						| ((val.green & 0xFF) << 16) 
+	 					| ((val.blue & 0xFF) << 8) 
+	 					| (val.alpha & 0xFF);
+		const unsigned = color >>> 0; // fixes unsigned integers
+		return '#' + unsigned.toString(16);
+	}
 
-// Defined status operation modes
-// provides a method for us to translate between the name and the coded number.
-const statusOperationMode = {
-	none: 0,
-	na_vhf: 1,
-	eu_vhf: 2,
-	field_day: 3,
-	rtty_ru: 4,
-	ww_digi: 5,
-	fox: 6,
-	hound: 7,
-	arrl_digi: 8
-};
+	return null; // invalid QColor
+}
+
+function encodeColor(val, obj) {
+	//QColor::Rgb	1  <<-- This code only encodes RGBA color spec
+	// Invalid=0, RGB=1, HSV=2, CMYK=3, HSL=4
+	if (!val) {
+		// if null is given send an invalid QColor
+		return { colorspec: 0x00, alpha: 0, red: 0, green: 0, blue: 0, pad: 0 };
+	}
+
+	let color_code = val.startsWith('#') ? val.substring(1) : val;
+	if (color_code.length != 6 && color_code.length != 8) {
+		throw new Error(`Invalid color code ${val}. Must be #rrggbbaa or #rrggbb format`);
+	}
+
+	color_code = (color_code.length == 6) ? color_code + 'FF' : color_code;		
+	const color = parseInt(color_code, 16);
+	return {
+		colorspec: 0x01,
+		alpha: ((color >> 0) & 0xFF) * 0x101,
+		red: ((color >> 24) & 0xFF) * 0x101,
+		green: ((color >> 16) & 0xFF) * 0x101,
+		blue: ((color >> 8) & 0xFF) * 0x101,
+		pad: 0x00
+	};
+}
 
 // *** Parsers for WSJT-X Datagrams ***
 
@@ -208,7 +223,7 @@ class WSJTXParser {
 	baseParser = new binaryParser()
 		.endianess('big')
 		.uint32('magic', { assert: WSJTX_MAGIC })
-		.uint32('schema', { assert: version => version >= 0x02 })
+		.uint32('schema', { assert: version => version >= MINIMUM_SCHEMA })
 		.uint32('type')
 		.nest('id', {type: stringParser, formatter: stringFormatter })
 		;
@@ -234,10 +249,10 @@ class WSJTXParser {
 	heartbeatEncoder = new binaryEncoder()
 		.nest(null, { type: this.baseEncoder })
 		.uint32('max_schema_number')
-		.uint32('ver_length', { encoder: (val, obj) => obj['version'].length })
-		.string('version', { length: 'ver_length' })
-		.uint32('rev_length', { encoder: (val, obj) => obj['revision'].length })
-		.string('revision', { length: 'rev_length' })
+		.uint32('version_length', { encoder: (val, obj) => obj['version'].length })
+		.string('version', { length: 'version_length' })
+		.uint32('revision_length', { encoder: (val, obj) => obj['revision'].length })
+		.string('revision', { length: 'revision_length' })
 		;
 
 	// Out since v2.0
@@ -303,8 +318,19 @@ class WSJTXParser {
 		;
 
 	// In (untested) since v2.0
+	// Defined reply modifiers.
+	// provides a method for us to translate between the name and the coded number.
+	replyModifier = {
+		shift: 0x01,	// shift
+		ctrl: 0x02,		// ctrl or CMD
+		alt: 0x04,		// ALT
+		windows: 0x10,	// windows key on windows
+		keypad: 0x20,	// keypad or arrows
+		group: 0x40,	// group switch X11 only
+	};
+
 	replyFields = ['time', 'snr', 'delta_time', 'delta_frequency', 'mode',
-					'message', 'low_confidence', 'modifiers'];
+					'message', 'low_confidence', 'modifiers'];		
 	replyParser = new binaryParser()
 		.uint32('time')
 		.nest('datetime_decode', {
@@ -318,7 +344,7 @@ class WSJTXParser {
 		.nest('mode', { type: stringParser, formatter: stringFormatter })
 		.nest('message', { type: stringParser, formatter: stringFormatter })
 		.uint8('low_confidence')
-		.uint8('modifiers', { formatter: val => keyForValue(replyModifier, val) })
+		.uint8('modifiers', { formatter: val => keyForValue(this.replyModifier, val) })
 		;
 
 	replyEncoder = new binaryEncoder()
@@ -447,9 +473,8 @@ class WSJTXParser {
 		;
 
 	// color parser used in call sign operations (below)
-	// (untested) parses colors
 	colorParser = new binaryParser()
-		.uint8('colorspec')
+		.uint8('colorspec')			//  RGB, HSV, CMYK or HSL, invalid
 		.uint16('alpha')
 		.uint16('red')
 		.uint16('green')
@@ -457,19 +482,31 @@ class WSJTXParser {
 		.uint16('pad')
 		;
 
-	// In (untested) since v2.0
-	highlightCallsignFields = ['background_color', 'foreground_color', 'highlight_last'];
+	// In since v2.0
+	highlightCallsignFields = ['background', 'foreground', 'highlight_last'];
 	highlightCallsignParser = new binaryParser()
-		.nest('background_color', { type: this.colorParser })
-		.nest('foreground_color', { type: this.colorParser })
+		.nest('callsign', { type: stringParser, formatter: stringFormatter })
+		.nest('background', { type: this.colorParser, formatter: formatColor })
+		.nest('foreground', { type: this.colorParser, formatter: formatColor })
 		.uint8('highlight_last', { formatter: boolFormatter })
+		;
+
+	colorEncoder = new binaryEncoder()
+		.uint8('colorspec')	//  invalid = 0, RGB=1, HSV=2, CMYK=3 or HSL=4	
+		.uint16('alpha')
+		.uint16('red')
+		.uint16('green')
+		.uint16('blue')
+		.uint16('pad')
 		;
 
 	highlightCallsignEncoder = new binaryEncoder()
 		.nest(null, { type: this.baseEncoder })
-		// .nest('background_color', { type: this.colorParser })
-		// .nest('foreground_color', { type: this.colorParser })
-		// .uint8('highlight_last', { formatter: boolFormatter })
+		.uint32('callsign_length', { encoder: (str, obj) => obj['callsign'].length })
+		.string('callsign', { length: 'callsign_length' })
+		.nest('background', { type: this.colorEncoder, encoder: encodeColor })
+		.nest('foreground', { type: this.colorEncoder, encoder: encodeColor })
+		.uint8('highlight_last', { formatter: boolFormatter })
 		;
 
 	// Core WSJT-X decoder/parser, uses other sub-parsers depending on 'type'
@@ -581,9 +618,22 @@ class WSJTXParser {
 
 // For WSJT-X >= v2.0.0 
 class WSJTXParser_v200 extends WSJTXParser {
+	// Defined status operation modes
+	// provides a method for us to translate between the name and the coded number.
+	specialOperationMode = {
+		none: 0,
+		na_vhf: 1,
+		eu_vhf: 2,
+		field_day: 3,
+		rtty_ru: 4,
+		ww_digi: 5,
+		fox: 6,
+		hound: 7,
+	};
+
 	statusFields = [...this.statusFields, 'special_operation_mode'];
 	statusParser = this.statusParser
-		.uint8('special_operation_mode', { formatter: v => keyForValue(statusOperationMode, v) })
+		.uint8('special_operation_mode', { formatter: v => keyForValue(this.specialOperationMode, v) })
 		;
 
 	statusEncoder = this.statusEncoder
@@ -647,7 +697,6 @@ class WSJTXParser_v210 extends WSJTXParser_v200 {
 		.uint8('generate_messages', { formatter: boolFormatter })
 		;
 
-	// TODO: v2.1 configureEncoder (v210)
 	configureEncoder = new binaryEncoder()
 		.nest(null, { type: this.baseEncoder })
 		.uint32('mode_length', {	
@@ -733,6 +782,15 @@ class WSJTXParser_v230 extends WSJTXParser_v210 {
 	// TODO: v2.1 qsoLoggedEncoder (v230)
 }
 
+class WSJTXParser_v260 extends WSJTXParser_v230 {
+	// Defined status operation modes
+	// provides a method for us to translate between the name and the coded number.
+	specialOperationMode = {
+		...this.specialOperationMode,
+		arrl_digi: 8
+	};
+}
+
 // For JTDX (untested)
 class JTDXParser extends WSJTXParser_v210 {
 	statusParser = this.statusParser
@@ -783,9 +841,13 @@ function getParser(version_string, schema) {
 		version = parseFloat(version_string);
 	}
 
-	// if (version >= 2.3) {
-	// 	return new WSJTXParser_v230(schema);
-	// }
+	if (version >= 2.6) {
+		return new WSJTXParser_v260(schema);
+	}
+
+	if (version >= 2.3) {
+		return new WSJTXParser_v230(schema);
+	}
 
 	if (version >= 2.1) {
 		return new WSJTXParser_v210(schema);

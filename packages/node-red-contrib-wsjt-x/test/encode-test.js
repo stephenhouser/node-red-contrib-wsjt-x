@@ -53,3 +53,14 @@ test_message({
   auto_tx_only: false
 });
 
+
+
+test_message({
+  type: 'highlight_callsign',
+  callsign: 'N1SH',
+	foreground_color: 'FFFFFF',
+	background_color: '#FF0000',
+  highlight_last: true
+
+});
+

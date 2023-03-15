@@ -26,6 +26,7 @@ The commands that can be encoded are as follows:
 - **location**: (broken?) `{"location": "FN43rq"}`
 - **logged_adif**: `{"adif_text": "...adif XML-like stuff..."}`,
 - **switch_configuration**: `{"configuration_name":"IC-705"}`
+- **highlight_callsign**: `{"callsign": "...", "background": "#ff00ff", "foreground": "000000", "highlight_last" false}` (null for invalid color, which clears highlight)
 - **configure**: (not implemented)
 ```
     {
