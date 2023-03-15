@@ -23,3 +23,8 @@ NodeRed paradigm.
 property is synthesized to reflect the actual date and time of a message. In previous versions
 the `time` field was modified to include date information where it was not present. This new
 version adheres to the don't modify original data idea.
+
+## Untested
+
+- I may have broken JTDX.
+- Have not tested `reply` or `configure`, `wspr_decode`

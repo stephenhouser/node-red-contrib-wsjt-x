@@ -863,10 +863,8 @@ function getParser(version_string, schema) {
 // Public: Decode a Buffer of data (from a UDP datagram) into an object
 // with keys and values representing the parsed data.
 function decode(buffer, version = DEFAULT_VERSION, schema = DEFAULT_SCHEMA) {
-
 	// TOD: Graceful degredataion of decoding when version not specified.
 	// If the parse fails with a high version number try a lower version.
-
 	const parser = getParser(version, schema);	
 	const decoded = parser.decode(buffer);
 	decoded.type = keyForValue(parser.messageType, decoded.type);
