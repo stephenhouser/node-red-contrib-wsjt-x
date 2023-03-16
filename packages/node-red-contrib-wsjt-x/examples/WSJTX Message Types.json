@@ -55,7 +55,7 @@
             },
             {
                 "t": "cont",
-                "v": "/qso_logged",
+                "v": "/qso-logged",
                 "vt": "str"
             },
             {
@@ -65,12 +65,12 @@
             },
             {
                 "t": "cont",
-                "v": "/wspr_decode",
+                "v": "/wspr-decode",
                 "vt": "str"
             },
             {
                 "t": "cont",
-                "v": "/logged_adif",
+                "v": "/logged-adif",
                 "vt": "str"
             },
             {

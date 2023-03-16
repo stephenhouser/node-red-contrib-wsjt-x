@@ -42,12 +42,14 @@ JSON.safeStringify = (obj, indent = 2) => {
 function keyForValue(enumType, value) {	// returns key for enum value
 	for (const key in enumType) {
 		if (typeof (enumType[key]) == 'number' && enumType[key] == value) {
-			return key;
+			const key_dash = key.replace('_', '-');
+			return key_dash;
 		}
 	}
 	return '';
 }
 function valueForKey(enumType, key) {		// returns code for key
+	const under_key = key.replace('-', '_');
 	return enumType.hasOwnProperty(key) ? enumType[key] : null;
 }
 
