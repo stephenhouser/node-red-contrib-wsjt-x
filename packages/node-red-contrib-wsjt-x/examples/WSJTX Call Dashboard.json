@@ -26,7 +26,7 @@
         "onceDelay": 0.1,
         "topic": "",
         "payloadType": "date",
-        "x": 130,
+        "x": 110,
         "y": 340,
         "wires": [
             [
@@ -45,7 +45,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 310,
+        "x": 290,
         "y": 340,
         "wires": [
             []
@@ -97,7 +97,7 @@
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 120,
+        "x": 110,
         "y": 440,
         "wires": [
             [
@@ -116,12 +116,111 @@
         "multicast": "true",
         "group": "224.0.0.1",
         "datatype": "buffer",
-        "x": 130,
+        "x": 110,
         "y": 80,
         "wires": [
             [
                 "c4569291aea7db3b"
             ]
+        ]
+    },
+    {
+        "id": "3e82b0ac011e5546",
+        "type": "function",
+        "z": "945e22923708a43f",
+        "name": "cq's from flow.qso to table data",
+        "func": "if (msg.topic.endsWith('/decode')) {\n    const qso_list = flow.get('qso') || {};\n    const table_data = [];\n    Object.keys(qso_list).forEach(function(call) {\n        let qso = qso_list[call];\n        if (qso.hasOwnProperty('message_decode') && qso.message_decode.hasOwnProperty('type')) {\n            if (qso.message_decode.type === 'cq') {\n                table_data.push({\n                    call: call,\n                    timestamp: qso.datetime,\n                    time: qso.time,\n                    grid: qso.message_decode.de_grid,\n                    message: qso.message\n                });\n            }\n        }\n    });\n\n    return { payload: table_data };\n}\n\nreturn null;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 160,
+        "wires": [
+            [
+                "fd85e206f667dc34"
+            ]
+        ]
+    },
+    {
+        "id": "42c5fe307f4e52e5",
+        "type": "function",
+        "z": "945e22923708a43f",
+        "name": "qso's from flow.qso to table data",
+        "func": "if (msg.topic.endsWith('/decode')) {\n    const qso_list = flow.get('qso') || {};\n    const table_data = [];\n    Object.keys(qso_list).forEach(function(call) {\n        let qso = qso_list[call];\n        table_data.push(qso);\n    });\n    \n    return { payload: table_data };\n}\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 220,
+        "wires": [
+            [
+                "1cefa1c008c9a239"
+            ]
+        ]
+    },
+    {
+        "id": "a19abbb8a816ed01",
+        "type": "function",
+        "z": "945e22923708a43f",
+        "name": "Save QSOs in flow.qso",
+        "func": "if (msg.topic.endsWith('/decode')) {\n    const qso_list = flow.get('qso') || {};\n    const de_call = msg.payload.message_decode.de_call;\n    const date_string = msg.payload.datetime_decode;\n    qso_list[de_call] = {\n        datetime: date_string,\n        time: new Date(date_string).toLocaleTimeString(),\n        message: msg.payload.message,\n        message_decode: msg.payload.message_decode\n    }\n    delete qso_list['_msgid'];\n    flow.set('qso', qso_list);\n    return msg;\n}\n\nreturn null;\n\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 550,
+        "y": 80,
+        "wires": [
+            [
+                "42c5fe307f4e52e5",
+                "3e82b0ac011e5546"
+            ]
+        ]
+    },
+    {
+        "id": "11b783872343c827",
+        "type": "comment",
+        "z": "945e22923708a43f",
+        "name": "Expire old QSO's from flow.qso",
+        "info": "",
+        "x": 150,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "a805859303528831",
+        "type": "comment",
+        "z": "945e22923708a43f",
+        "name": "Show saved decode messages in tables",
+        "info": "",
+        "x": 180,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "c28bc792becb08a4",
+        "type": "comment",
+        "z": "945e22923708a43f",
+        "name": "Manually clear flow.qso",
+        "info": "",
+        "x": 130,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "014c1626f42132c2",
+        "type": "wsjt-x-decode",
+        "z": "945e22923708a43f",
+        "name": "",
+        "x": 320,
+        "y": 80,
+        "wires": [
+            []
         ]
     },
     {
@@ -190,47 +289,9 @@
         ],
         "outputs": 0,
         "cts": false,
-        "x": 590,
-        "y": 180,
+        "x": 570,
+        "y": 160,
         "wires": []
-    },
-    {
-        "id": "3e82b0ac011e5546",
-        "type": "function",
-        "z": "945e22923708a43f",
-        "name": "cq's from flow.qso to table data",
-        "func": "if (msg.topic === 'decode') {\n    const qso_list = flow.get('qso') || {};\n    const table_data = [];\n    Object.keys(qso_list).forEach(function(call) {\n        let qso = qso_list[call];\n        if (qso.hasOwnProperty('message_decode') && qso.message_decode.hasOwnProperty('type')) {\n            if (qso.message_decode.type === 'cq') {\n                table_data.push({\n                    call: call,\n                    time: qso.time,\n                    grid: qso.message_decode.de_grid,\n                    message: qso.message\n                });\n            }\n        }\n    });\n\n    return { payload: table_data };\n}\n\nreturn null;",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 350,
-        "y": 180,
-        "wires": [
-            [
-                "fd85e206f667dc34"
-            ]
-        ]
-    },
-    {
-        "id": "42c5fe307f4e52e5",
-        "type": "function",
-        "z": "945e22923708a43f",
-        "name": "qso's from flow.qso to table data",
-        "func": "if (msg.topic === 'decode') {\n    const qso_list = flow.get('qso') || {};\n    const table_data = [];\n    Object.keys(qso_list).forEach(function(call) {\n        let qso = qso_list[call];\n        table_data.push(qso);\n    });\n    \n    return { payload: table_data };\n}\n",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 360,
-        "y": 240,
-        "wires": [
-            [
-                "1cefa1c008c9a239"
-            ]
-        ]
     },
     {
         "id": "1cefa1c008c9a239",
@@ -243,7 +304,7 @@
         "height": "10",
         "columns": [
             {
-                "field": "time",
+                "field": "datetime",
                 "title": "Time",
                 "width": "",
                 "align": "center",
@@ -325,58 +386,8 @@
         ],
         "outputs": 0,
         "cts": false,
-        "x": 590,
-        "y": 240,
-        "wires": []
-    },
-    {
-        "id": "a19abbb8a816ed01",
-        "type": "function",
-        "z": "945e22923708a43f",
-        "name": "Save QSOs in flow.qso",
-        "func": "if (msg.topic === 'decode') {\n    const qso_list = flow.get('qso') || {};\n    \n    const dtime = new Date(msg.payload.time)\n    const time = dtime.toISOString().slice(11,19);\n    const de_call = msg.payload.message_decode.de_call;\n    qso_list[de_call] = {\n        timestamp: dtime,\n        time: time,\n        message: msg.payload.message,\n        message_decode: msg.payload.message_decode\n    }\n    delete qso_list['_msgid'];\n    flow.set('qso', qso_list);\n}\n\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 520,
-        "y": 80,
-        "wires": [
-            [
-                "42c5fe307f4e52e5",
-                "3e82b0ac011e5546"
-            ]
-        ]
-    },
-    {
-        "id": "11b783872343c827",
-        "type": "comment",
-        "z": "945e22923708a43f",
-        "name": "Expire old QSO's from flow.qso",
-        "info": "",
-        "x": 150,
-        "y": 300,
-        "wires": []
-    },
-    {
-        "id": "a805859303528831",
-        "type": "comment",
-        "z": "945e22923708a43f",
-        "name": "Show saved decode messages in tables",
-        "info": "",
-        "x": 180,
-        "y": 40,
-        "wires": []
-    },
-    {
-        "id": "c28bc792becb08a4",
-        "type": "comment",
-        "z": "945e22923708a43f",
-        "name": "Manually clear flow.qso",
-        "info": "",
-        "x": 120,
-        "y": 400,
+        "x": 570,
+        "y": 220,
         "wires": []
     },
     {

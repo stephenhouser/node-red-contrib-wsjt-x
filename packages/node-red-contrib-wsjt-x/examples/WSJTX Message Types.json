@@ -1,15 +1,15 @@
 [
     {
-        "id": "767fd6117e976096",
+        "id": "9270f17dccdafa84",
         "type": "tab",
         "label": "WSJT-X Message Types",
         "disabled": false,
         "info": ""
     },
     {
-        "id": "d8f0361cbd9e56c1",
+        "id": "d251a31302a470f8",
         "type": "udp in",
-        "z": "767fd6117e976096",
+        "z": "9270f17dccdafa84",
         "name": "",
         "iface": "",
         "port": "2237",
@@ -17,60 +17,60 @@
         "multicast": "true",
         "group": "224.0.0.1",
         "datatype": "buffer",
-        "x": 130,
+        "x": 110,
         "y": 80,
         "wires": [
             [
-                "014c1626f42132c2"
+                "5ac45e60edfec6fc"
             ]
         ]
     },
     {
-        "id": "0279c9015319b82f",
+        "id": "3f0f0aeb71391c47",
         "type": "switch",
-        "z": "767fd6117e976096",
+        "z": "9270f17dccdafa84",
         "name": "",
         "property": "topic",
         "propertyType": "msg",
         "rules": [
             {
-                "t": "eq",
-                "v": "heartbeat",
+                "t": "cont",
+                "v": "/heartbeat",
                 "vt": "str"
             },
             {
-                "t": "eq",
-                "v": "status",
+                "t": "cont",
+                "v": "/status",
                 "vt": "str"
             },
             {
-                "t": "eq",
-                "v": "decode",
+                "t": "cont",
+                "v": "/decode",
                 "vt": "str"
             },
             {
-                "t": "eq",
-                "v": "clear",
+                "t": "cont",
+                "v": "/clear",
                 "vt": "str"
             },
             {
-                "t": "eq",
-                "v": "qso-logged",
+                "t": "cont",
+                "v": "/qso_logged",
                 "vt": "str"
             },
             {
-                "t": "eq",
-                "v": "close",
+                "t": "cont",
+                "v": "/close",
                 "vt": "str"
             },
             {
-                "t": "eq",
-                "v": "wspr-decode",
+                "t": "cont",
+                "v": "/wspr_decode",
                 "vt": "str"
             },
             {
-                "t": "eq",
-                "v": "logged-adif",
+                "t": "cont",
+                "v": "/logged_adif",
                 "vt": "str"
             },
             {
@@ -84,216 +84,216 @@
         "y": 280,
         "wires": [
             [
-                "bd929024d2638706"
+                "84a06d9cb80de237"
             ],
             [
-                "119dba94e0d8e727"
+                "bdb06dc8490faf33"
             ],
             [
-                "6f9da7aae1951a3e"
+                "afc5f26000af2b46"
             ],
             [
-                "14b29cec51ca8d17"
+                "ada66d726664ca24"
             ],
             [
-                "c38484db9431968d"
+                "125229f460449a01"
             ],
             [
-                "32535407664ab502"
+                "e3e3d15e26983f66"
             ],
             [
-                "43ffabd6b6096bf1"
+                "4044e4a428b51e8e"
             ],
             [
-                "3b531a56360cfb0f"
+                "4ac5b060fbeb1c5c"
             ],
             [
-                "f50228bc3d012d39"
+                "b351f2adcc021976"
             ]
         ]
     },
     {
-        "id": "014c1626f42132c2",
+        "id": "5ac45e60edfec6fc",
         "type": "wsjt-x-decode",
-        "z": "767fd6117e976096",
+        "z": "9270f17dccdafa84",
         "name": "",
         "x": 320,
         "y": 80,
         "wires": [
             [
-                "630e5e289971ca0a"
+                "c4758013f8e496a5"
             ]
         ]
     },
     {
-        "id": "bd929024d2638706",
+        "id": "84a06d9cb80de237",
         "type": "function",
-        "z": "767fd6117e976096",
+        "z": "9270f17dccdafa84",
         "name": "heartbeat",
-        "func": "let count = flow.get(msg.topic) || 0;\nnode.status({fill:'green', shape:'dot', text: `${msg.topic}=${count}`});\nreturn msg;",
+        "func": "const [wsjtx_id, msg_type] = msg.topic.split('/');\nlet count = flow.get(msg_type) || 0;\nnode.status({fill:'green', shape:'dot', text: `${msg_type}=${count}`});\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 580,
+        "x": 570,
         "y": 80,
         "wires": [
             []
         ]
     },
     {
-        "id": "630e5e289971ca0a",
+        "id": "c4758013f8e496a5",
         "type": "function",
-        "z": "767fd6117e976096",
+        "z": "9270f17dccdafa84",
         "name": "Save Counts",
-        "func": "const type = msg.topic;\nlet count = flow.get(type) || 0;\nflow.set(type, ++count);\nreturn msg;",
+        "func": "const [wsjtx_id, msg_type] = msg.topic.split('/');\nlet count = flow.get(msg_type) || 0;\nflow.set(msg_type, ++count);\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 190,
+        "x": 150,
         "y": 280,
         "wires": [
             [
-                "0279c9015319b82f"
+                "3f0f0aeb71391c47"
             ]
         ]
     },
     {
-        "id": "6f9da7aae1951a3e",
+        "id": "afc5f26000af2b46",
         "type": "function",
-        "z": "767fd6117e976096",
+        "z": "9270f17dccdafa84",
         "name": "decode",
-        "func": "let count = flow.get(msg.topic) || 0;\nnode.status({fill:'green', shape:'dot', text: `${msg.topic}=${count}`});\nreturn msg;",
+        "func": "const [wsjtx_id, msg_type] = msg.topic.split('/');\nlet count = flow.get(msg_type) || 0;\nnode.status({fill:'green', shape:'dot', text: `${msg_type}=${count}`});\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 580,
+        "x": 560,
         "y": 200,
         "wires": [
             []
         ]
     },
     {
-        "id": "14b29cec51ca8d17",
+        "id": "ada66d726664ca24",
         "type": "function",
-        "z": "767fd6117e976096",
+        "z": "9270f17dccdafa84",
         "name": "clear",
-        "func": "let count = flow.get(msg.topic) || 0;\nnode.status({fill:'green', shape:'dot', text: `${msg.topic}=${count}`});\nreturn msg;",
+        "func": "const [wsjtx_id, msg_type] = msg.topic.split('/');\nlet count = flow.get(msg_type) || 0;\nnode.status({fill:'green', shape:'dot', text: `${msg_type}=${count}`});\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 570,
+        "x": 550,
         "y": 260,
         "wires": [
             []
         ]
     },
     {
-        "id": "119dba94e0d8e727",
+        "id": "bdb06dc8490faf33",
         "type": "function",
-        "z": "767fd6117e976096",
+        "z": "9270f17dccdafa84",
         "name": "status",
-        "func": "let count = flow.get(msg.topic) || 0;\nnode.status({fill:'green', shape:'dot', text: `${msg.topic}=${count}`});\nreturn msg;",
+        "func": "const [wsjtx_id, msg_type] = msg.topic.split('/');\nlet count = flow.get(msg_type) || 0;\nnode.status({fill:'green', shape:'dot', text: `${msg_type}=${count}`});\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 570,
+        "x": 550,
         "y": 140,
         "wires": [
             []
         ]
     },
     {
-        "id": "c38484db9431968d",
+        "id": "125229f460449a01",
         "type": "function",
-        "z": "767fd6117e976096",
-        "name": "qsl-logged",
-        "func": "let count = flow.get(msg.topic) || 0;\nnode.status({fill:'green', shape:'dot', text: `${msg.topic}=${count}`});\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 590,
-        "y": 320,
-        "wires": [
-            []
-        ]
-    },
-    {
-        "id": "32535407664ab502",
-        "type": "function",
-        "z": "767fd6117e976096",
-        "name": "close",
-        "func": "let count = flow.get(msg.topic) || 0;\nnode.status({fill:'green', shape:'dot', text: `${msg.topic}=${count}`});\nreturn msg;",
+        "z": "9270f17dccdafa84",
+        "name": "qsl_logged",
+        "func": "const [wsjtx_id, msg_type] = msg.topic.split('/');\nlet count = flow.get(msg_type) || 0;\nnode.status({fill:'green', shape:'dot', text: `${msg_type}=${count}`});\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
         "x": 570,
+        "y": 320,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "e3e3d15e26983f66",
+        "type": "function",
+        "z": "9270f17dccdafa84",
+        "name": "close",
+        "func": "const [wsjtx_id, msg_type] = msg.topic.split('/');\nlet count = flow.get(msg_type) || 0;\nnode.status({fill:'green', shape:'dot', text: `${msg_type}=${count}`});\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 550,
         "y": 380,
         "wires": [
             []
         ]
     },
     {
-        "id": "43ffabd6b6096bf1",
+        "id": "4044e4a428b51e8e",
         "type": "function",
-        "z": "767fd6117e976096",
-        "name": "wspr-decode",
-        "func": "let count = flow.get(msg.topic) || 0;\nnode.status({fill:'green', shape:'dot', text: `${msg.topic}=${count}`});\nreturn msg;",
+        "z": "9270f17dccdafa84",
+        "name": "wspr_decode",
+        "func": "const [wsjtx_id, msg_type] = msg.topic.split('/');\nlet count = flow.get(msg_type) || 0;\nnode.status({fill:'green', shape:'dot', text: `${msg_type}=${count}`});\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 590,
+        "x": 580,
         "y": 440,
         "wires": [
             []
         ]
     },
     {
-        "id": "3b531a56360cfb0f",
+        "id": "4ac5b060fbeb1c5c",
         "type": "function",
-        "z": "767fd6117e976096",
-        "name": "logged-adif",
-        "func": "let count = flow.get(msg.topic) || 0;\nnode.status({fill:'green', shape:'dot', text: `${msg.topic}=${count}`});\nreturn msg;",
+        "z": "9270f17dccdafa84",
+        "name": "logged_adif",
+        "func": "const [wsjtx_id, msg_type] = msg.topic.split('/');\nlet count = flow.get(msg_type) || 0;\nnode.status({fill:'green', shape:'dot', text: `${msg_type}=${count}`});\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 590,
+        "x": 570,
         "y": 500,
         "wires": [
             []
         ]
     },
     {
-        "id": "ddfa6770b08c1bf7",
+        "id": "b9cdb314b637b42f",
         "type": "comment",
-        "z": "767fd6117e976096",
+        "z": "9270f17dccdafa84",
         "name": "Show count of each message type",
         "info": "",
-        "x": 560,
+        "x": 640,
         "y": 40,
         "wires": []
     },
     {
-        "id": "f50228bc3d012d39",
+        "id": "b351f2adcc021976",
         "type": "debug",
-        "z": "767fd6117e976096",
+        "z": "9270f17dccdafa84",
         "name": "",
         "active": true,
         "tosidebar": true,
@@ -303,14 +303,14 @@
         "targetType": "full",
         "statusVal": "",
         "statusType": "auto",
-        "x": 570,
+        "x": 550,
         "y": 560,
         "wires": []
     },
     {
-        "id": "a13668de14b60b07",
+        "id": "8d228e63cfe5dbf3",
         "type": "comment",
-        "z": "767fd6117e976096",
+        "z": "9270f17dccdafa84",
         "name": "Decode incoming WSJT-X",
         "info": "",
         "x": 130,
@@ -318,9 +318,9 @@
         "wires": []
     },
     {
-        "id": "1f76e1a485fc803a",
+        "id": "12eb3334ba6fb070",
         "type": "comment",
-        "z": "767fd6117e976096",
+        "z": "9270f17dccdafa84",
         "name": "Save counts of each type",
         "info": "",
         "x": 150,

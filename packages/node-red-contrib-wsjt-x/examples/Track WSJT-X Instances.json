@@ -2,7 +2,7 @@
     {
         "id": "a59ea6503785db5d",
         "type": "tab",
-        "label": "Track WSJT-X Instances",
+        "label": "Track WSJTX Instances",
         "disabled": false,
         "info": ""
     },
@@ -51,7 +51,7 @@
         "targetType": "full",
         "statusVal": "",
         "statusType": "auto",
-        "x": 690,
+        "x": 710,
         "y": 140,
         "wires": []
     },
@@ -60,7 +60,7 @@
         "type": "function",
         "z": "a59ea6503785db5d",
         "name": "Track Instances",
-        "func": "const instances = flow.get('wsjtx') || {};\n\nif (msg.topic === 'status') {\n    instances[msg.payload.id] = msg.payload\n} else if (msg.topic === 'close') {\n    delete instances[msg.payload.id];\n}\n\nflow.set('wsjtx', instances);\nreturn msg;",
+        "func": "const instances = flow.get('wsjtx') || {};\n\nconst [wsjtx_id, msg_type] = msg.topic.split('/');\nif (msg_type == 'status') {\n    instances[wsjtx_id] = msg.payload\n} else if (msg_type == 'close') {\n    delete instances[wsjtx_id];\n}\n\nflow.set('wsjtx', instances);\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -95,7 +95,7 @@
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 140,
+        "x": 130,
         "y": 380,
         "wires": [
             [
@@ -115,7 +115,7 @@
         "complete": "false",
         "statusVal": "",
         "statusType": "auto",
-        "x": 550,
+        "x": 560,
         "y": 380,
         "wires": []
     },
@@ -137,10 +137,10 @@
         "crontab": "",
         "once": false,
         "onceDelay": 0.1,
-        "topic": "status",
+        "topic": "NodeRed/status",
         "payload": "{\"id\": \"NodeRed\"}",
         "payloadType": "json",
-        "x": 230,
+        "x": 240,
         "y": 240,
         "wires": [
             [
@@ -159,7 +159,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 330,
+        "x": 340,
         "y": 380,
         "wires": [
             [
@@ -185,10 +185,10 @@
         "crontab": "",
         "once": false,
         "onceDelay": 0.1,
-        "topic": "close",
+        "topic": "NodeRed/close",
         "payload": "{\"id\": \"NodeRed\"}",
         "payloadType": "json",
-        "x": 220,
+        "x": 240,
         "y": 280,
         "wires": [
             [
@@ -212,7 +212,7 @@
         "z": "a59ea6503785db5d",
         "name": "Track details about multiple instances of WSJT-X",
         "info": "",
-        "x": 200,
+        "x": 210,
         "y": 40,
         "wires": []
     },
@@ -232,7 +232,7 @@
         "z": "a59ea6503785db5d",
         "name": "Get list of WSJT-X Instance names/ids for display",
         "info": "",
-        "x": 220,
+        "x": 230,
         "y": 340,
         "wires": []
     },
@@ -275,7 +275,7 @@
         "complete": "false",
         "statusVal": "",
         "statusType": "auto",
-        "x": 540,
+        "x": 560,
         "y": 480,
         "wires": []
     },
@@ -296,7 +296,7 @@
         "topic": "",
         "payload": "WSJT-X",
         "payloadType": "str",
-        "x": 130,
+        "x": 110,
         "y": 480,
         "wires": [
             [
@@ -310,7 +310,7 @@
         "z": "a59ea6503785db5d",
         "name": "Get the details of the instance given in msg.payload",
         "info": "",
-        "x": 230,
+        "x": 240,
         "y": 440,
         "wires": []
     }
