@@ -216,7 +216,7 @@
         "id": "125229f460449a01",
         "type": "function",
         "z": "9270f17dccdafa84",
-        "name": "qsl_logged",
+        "name": "qso-logged",
         "func": "const [wsjtx_id, msg_type] = msg.topic.split('/');\nlet count = flow.get(msg_type) || 0;\nnode.status({fill:'green', shape:'dot', text: `${msg_type}=${count}`});\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
