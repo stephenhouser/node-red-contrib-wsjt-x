@@ -48,9 +48,10 @@ function keyForValue(enumType, value) {	// returns key for enum value
 	}
 	return '';
 }
+
 function valueForKey(enumType, key) {		// returns code for key
 	const under_key = key.replace('-', '_');
-	return enumType.hasOwnProperty(key) ? enumType[key] : null;
+	return enumType.hasOwnProperty(under_key) ? enumType[under_key] : null;
 }
 
 // a parser that parses nothing
@@ -165,7 +166,7 @@ function formatColor(val) {
 function encodeColor(val, obj) {
 	//QColor::Rgb	1  <<-- This code only encodes RGBA color spec
 	// Invalid=0, RGB=1, HSV=2, CMYK=3, HSL=4
-	if (!val) {
+	if (!val || val.length < 1) {
 		// if null is given send an invalid QColor
 		return { colorspec: 0x00, alpha: 0, red: 0, green: 0, blue: 0, pad: 0 };
 	}
@@ -485,7 +486,7 @@ class WSJTXParser {
 		;
 
 	// In since v2.0
-	highlightCallsignFields = ['background', 'foreground', 'highlight_last'];
+	highlightCallsignFields = ['callsign', 'background', 'foreground', 'highlight_last'];
 	highlightCallsignParser = new binaryParser()
 		.nest('callsign', { type: stringParser, formatter: stringFormatter })
 		.nest('background', { type: this.colorParser, formatter: formatColor })
@@ -580,12 +581,13 @@ class WSJTXParser {
 
 	// Encode message (object) to a buffer which can be sent as a WSJT-X UDP datagram
 	encode(msg) {
-		const type_code = valueForKey(this.messageType, msg.type);
+		const encoder_key = msg.type.replace('-', '_');
+		const type_code = valueForKey(this.messageType, encoder_key);
 		if (type_code < 0) {
 			throw new Error(`Invalid WSJT-X message type: ${msg.type}`);
 		}
 
-		if (!(msg.type in this.encoders)) {
+		if (!(encoder_key in this.encoders)) {
 			throw new Error(`No WSJT-X encoder for message type: ${msg.type}`);
 		}
 
@@ -608,7 +610,7 @@ class WSJTXParser {
 		// find the encoder and it's required fields in the encoders list
 		// uses a lookup table so we can add encoders with newer versions
 		// just by adding to the encoders table.
-		const [encoder, fields] = this.encoders[msg.type];
+		const [encoder, fields] = this.encoders[encoder_key];
 		const missing = this.checkFields(encode_msg, fields);
 		if (missing.length > 0) {
 			throw new Error(`Missing fields [${missing}] in message to be encoded`);

@@ -7,48 +7,22 @@
         "info": ""
     },
     {
-        "id": "f2bc5908e7ffdbed",
-        "type": "inject",
-        "z": "945e22923708a43f",
-        "name": "",
-        "props": [
-            {
-                "p": "payload"
-            },
-            {
-                "p": "topic",
-                "vt": "str"
-            }
-        ],
-        "repeat": "10",
-        "crontab": "",
-        "once": true,
-        "onceDelay": 0.1,
-        "topic": "",
-        "payloadType": "date",
-        "x": 110,
-        "y": 340,
-        "wires": [
-            [
-                "886cda80d593aa05"
-            ]
-        ]
-    },
-    {
         "id": "886cda80d593aa05",
         "type": "function",
         "z": "945e22923708a43f",
-        "name": "Expire QSOs",
-        "func": "const time_to_live = 60 * 5 * 1000; // 5 minutes\n\nconst qso_list = flow.get('qso') || {};\nconst now = new Date();\nconst new_qso_list = {};\nObject.keys(qso_list).forEach(function(call) {\n    let qso = qso_list[call];\n    if (now - qso.timestamp <= time_to_live) {\n        new_qso_list[call] = qso;\n    }\n});\nflow.set('qso', new_qso_list);\nreturn new_qso_list;",
+        "name": "Expire QSOs (1 minute)",
+        "func": "const time_to_live = 1 * 60 * 1000; // 1 minute\n\nconst qso_list = flow.get('qso') || {};\nconst now = new Date();\nconst new_qso_list = {};\nObject.keys(qso_list).forEach(function(call) {\n    const qso = qso_list[call];\n    const q_time = new Date(qso.datetime);\n    if ((now - q_time) <= time_to_live) {\n        new_qso_list[call] = qso;\n    }\n});\n\nflow.set('qso', new_qso_list);\nreturn {\n    ...msg,\n    payload: new_qso_list\n};",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
         "x": 290,
-        "y": 340,
+        "y": 620,
         "wires": [
-            []
+            [
+                "27e1bd48e1e34035"
+            ]
         ]
     },
     {
@@ -63,6 +37,13 @@
                 "pt": "flow",
                 "to": "{}",
                 "tot": "json"
+            },
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "[]",
+                "tot": "json"
             }
         ],
         "action": "",
@@ -70,38 +51,11 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 310,
-        "y": 440,
-        "wires": [
-            []
-        ]
-    },
-    {
-        "id": "375a9bc44c12d58c",
-        "type": "inject",
-        "z": "945e22923708a43f",
-        "name": "",
-        "props": [
-            {
-                "p": "payload"
-            },
-            {
-                "p": "topic",
-                "vt": "str"
-            }
-        ],
-        "repeat": "",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "topic": "",
-        "payload": "",
-        "payloadType": "date",
-        "x": 110,
-        "y": 440,
+        "x": 290,
+        "y": 520,
         "wires": [
             [
-                "219031d3005eccd5"
+                "27e1bd48e1e34035"
             ]
         ]
     },
@@ -120,7 +74,8 @@
         "y": 80,
         "wires": [
             [
-                "c4569291aea7db3b"
+                "c4569291aea7db3b",
+                "b6fee810134b2c68"
             ]
         ]
     },
@@ -129,14 +84,14 @@
         "type": "function",
         "z": "945e22923708a43f",
         "name": "cq's from flow.qso to table data",
-        "func": "if (msg.topic.endsWith('/decode')) {\n    const qso_list = flow.get('qso') || {};\n    const table_data = [];\n    Object.keys(qso_list).forEach(function(call) {\n        let qso = qso_list[call];\n        if (qso.hasOwnProperty('message_decode') && qso.message_decode.hasOwnProperty('type')) {\n            if (qso.message_decode.type === 'cq') {\n                table_data.push({\n                    call: call,\n                    timestamp: qso.datetime,\n                    time: qso.time,\n                    grid: qso.message_decode.de_grid,\n                    message: qso.message\n                });\n            }\n        }\n    });\n\n    return { payload: table_data };\n}\n\nreturn null;",
+        "func": "const qso_list = flow.get('qso') || {};\nconst table_data = [];\nObject.keys(qso_list).forEach(function(call) {\n    let qso = qso_list[call];\n    if (qso.hasOwnProperty('message_decode') && qso.message_decode.hasOwnProperty('type')) {\n        if (qso.message_decode.type === 'cq') {\n            table_data.push({\n                call: call,\n                timestamp: qso.datetime,\n                time: qso.time,\n                grid: qso.message_decode.de_grid,\n                message: qso.message\n            });\n        }\n    }\n});\n\nreturn { payload: table_data };\n",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 320,
-        "y": 160,
+        "x": 280,
+        "y": 340,
         "wires": [
             [
                 "fd85e206f667dc34"
@@ -148,14 +103,14 @@
         "type": "function",
         "z": "945e22923708a43f",
         "name": "qso's from flow.qso to table data",
-        "func": "if (msg.topic.endsWith('/decode')) {\n    const qso_list = flow.get('qso') || {};\n    const table_data = [];\n    Object.keys(qso_list).forEach(function(call) {\n        let qso = qso_list[call];\n        table_data.push(qso);\n    });\n    \n    return { payload: table_data };\n}\n",
+        "func": "const qso_list = flow.get('qso') || {};\nconst table_data = [];\nObject.keys(qso_list).forEach(function(call) {\n    let qso = qso_list[call];\n    table_data.push(qso);\n});\n\nreturn { payload: table_data };\n",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 320,
-        "y": 220,
+        "x": 280,
+        "y": 260,
         "wires": [
             [
                 "1cefa1c008c9a239"
@@ -167,18 +122,17 @@
         "type": "function",
         "z": "945e22923708a43f",
         "name": "Save QSOs in flow.qso",
-        "func": "if (msg.topic.endsWith('/decode')) {\n    const qso_list = flow.get('qso') || {};\n    const de_call = msg.payload.message_decode.de_call;\n    const date_string = msg.payload.datetime_decode;\n    qso_list[de_call] = {\n        datetime: date_string,\n        time: new Date(date_string).toLocaleTimeString(),\n        message: msg.payload.message,\n        message_decode: msg.payload.message_decode\n    }\n    delete qso_list['_msgid'];\n    flow.set('qso', qso_list);\n    return msg;\n}\n\nreturn null;\n\n",
+        "func": "if (msg.topic.endsWith('/decode')) {\n    const qso_list = flow.get('qso') || {};\n    const de_call = msg.payload.message_decode.de_call;\n    const date_string = msg.payload.datetime_decode;\n    qso_list[de_call] = {\n        datetime: date_string,\n        time: new Date(date_string).toLocaleTimeString(),\n        message: msg.payload.message,\n        message_decode: msg.payload.message_decode\n    }\n    delete qso_list['_msgid'];\n    flow.set('qso', qso_list);\n    \n    return msg;\n}\n\nreturn null;\n\n",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
         "x": 550,
-        "y": 80,
+        "y": 140,
         "wires": [
             [
-                "42c5fe307f4e52e5",
-                "3e82b0ac011e5546"
+                "c79de1c9136e4ac1"
             ]
         ]
     },
@@ -188,8 +142,8 @@
         "z": "945e22923708a43f",
         "name": "Expire old QSO's from flow.qso",
         "info": "",
-        "x": 150,
-        "y": 300,
+        "x": 170,
+        "y": 580,
         "wires": []
     },
     {
@@ -208,20 +162,9 @@
         "z": "945e22923708a43f",
         "name": "Manually clear flow.qso",
         "info": "",
-        "x": 130,
-        "y": 400,
+        "x": 150,
+        "y": 480,
         "wires": []
-    },
-    {
-        "id": "014c1626f42132c2",
-        "type": "wsjt-x-decode",
-        "z": "945e22923708a43f",
-        "name": "",
-        "x": 320,
-        "y": 80,
-        "wires": [
-            []
-        ]
     },
     {
         "id": "c4569291aea7db3b",
@@ -229,7 +172,7 @@
         "z": "945e22923708a43f",
         "name": "",
         "x": 320,
-        "y": 80,
+        "y": 140,
         "wires": [
             [
                 "a19abbb8a816ed01"
@@ -242,9 +185,9 @@
         "z": "945e22923708a43f",
         "group": "f9bd40032d4a30d1",
         "name": "",
-        "order": 1,
+        "order": 2,
         "width": "24",
-        "height": "10",
+        "height": "5",
         "columns": [
             {
                 "field": "time",
@@ -287,11 +230,15 @@
                 }
             }
         ],
-        "outputs": 0,
-        "cts": false,
-        "x": 570,
-        "y": 160,
-        "wires": []
+        "outputs": 1,
+        "cts": true,
+        "x": 490,
+        "y": 340,
+        "wires": [
+            [
+                "91167acb049bc3a8"
+            ]
+        ]
     },
     {
         "id": "1cefa1c008c9a239",
@@ -384,25 +331,275 @@
                 }
             }
         ],
-        "outputs": 0,
-        "cts": false,
-        "x": 570,
-        "y": 220,
+        "outputs": 1,
+        "cts": true,
+        "x": 490,
+        "y": 260,
+        "wires": [
+            [
+                "e47be09c3e222b77"
+            ]
+        ]
+    },
+    {
+        "id": "aaa62c09c55041ca",
+        "type": "ui_button",
+        "z": "945e22923708a43f",
+        "name": "",
+        "group": "f9bd40032d4a30d1",
+        "order": 9,
+        "width": "2",
+        "height": "1",
+        "passthru": false,
+        "label": "Clear",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 90,
+        "y": 520,
+        "wires": [
+            [
+                "219031d3005eccd5"
+            ]
+        ]
+    },
+    {
+        "id": "212beeb0936fe748",
+        "type": "ui_button",
+        "z": "945e22923708a43f",
+        "name": "",
+        "group": "f9bd40032d4a30d1",
+        "order": 9,
+        "width": "2",
+        "height": "1",
+        "passthru": false,
+        "label": "Expire",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 90,
+        "y": 620,
+        "wires": [
+            [
+                "886cda80d593aa05"
+            ]
+        ]
+    },
+    {
+        "id": "b6d83b6402db216a",
+        "type": "wsjt-x-encode",
+        "z": "945e22923708a43f",
+        "name": "",
+        "wsjtx_id": "NODE-RED",
+        "version": 2.6,
+        "schema": 3,
+        "x": 460,
+        "y": 420,
+        "wires": [
+            [
+                "33f71bd2e6c60139"
+            ]
+        ]
+    },
+    {
+        "id": "f5844091904d2c37",
+        "type": "udp out",
+        "z": "945e22923708a43f",
+        "name": "",
+        "addr": "",
+        "iface": "",
+        "port": "",
+        "ipv": "udp4",
+        "outport": "",
+        "base64": false,
+        "multicast": "false",
+        "x": 790,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "e47be09c3e222b77",
+        "type": "function",
+        "z": "945e22923708a43f",
+        "name": "Highlight Call in WSJT-X",
+        "func": "const topic = msg.topic.split('.');\n\nif (topic.length > 1\n    && 'message_decode' in msg.payload\n    && (topic[1] == 'de_call' || topic[1] =='dx_call')) {\n        const callsign = msg.payload.message_decode[topic[1]];\n        \n        // track calls in flow, remove highlight on second click\n        const highlighted = flow.get('highlighted') || [];\n        const index = highlighted.indexOf(callsign);\n        if (index > -1) {\n            // remove\n            highlighted.splice(index, 1);\n            bg = null;\n            fg = null;\n        } else {\n            highlighted.push(callsign);\n            bg = '#ff4444';\n            fg = '#000000';\n        }\n        flow.set('highlighted', highlighted);\n\n        return {\n            topic: 'highlight-callsign',\n            payload: {\n                ...msg,\n                callsign: callsign,\n                'background': bg,\n                'foreground': fg,\n                'highlight_last': false\n            }\n        };\n}\n\nreturn null;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 670,
+        "y": 260,
+        "wires": [
+            [
+                "b6d83b6402db216a"
+            ]
+        ]
+    },
+    {
+        "id": "91167acb049bc3a8",
+        "type": "function",
+        "z": "945e22923708a43f",
+        "name": "Reply to CQ",
+        "func": "const topic = msg.topic.split('.');\n\nif (topic == 'call') {\n        const callsign = msg.payload.call;\n        \n        // track calls in flow, remove highlight on second click\n        const highlighted = flow.get('highlighted') || [];\n        const index = highlighted.indexOf(callsign);\n        if (index > -1) {\n            // remove\n            highlighted.splice(index, 1);\n            bg = null;\n            fg = null;\n        } else {\n            highlighted.push(callsign);\n            bg = '#ff4444';\n            fg = '#000000';\n        }\n        flow.set('highlighted', highlighted);\n\n        return {\n            topic: 'highlight-callsign',\n            payload: {\n                ...msg,\n                callsign: callsign,\n                'background': bg,\n                'foreground': fg,\n                'highlight_last': false\n            }\n        };\n}\n\nreturn null;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 630,
+        "y": 340,
+        "wires": [
+            [
+                "b6d83b6402db216a"
+            ]
+        ]
+    },
+    {
+        "id": "d5e27dc266e07d5a",
+        "type": "comment",
+        "z": "945e22923708a43f",
+        "name": "Save IP and Port of WSJT-X from incoming messages",
+        "info": "",
+        "x": 660,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "b6fee810134b2c68",
+        "type": "change",
+        "z": "945e22923708a43f",
+        "name": "Save Address",
+        "rules": [
+            {
+                "t": "set",
+                "p": "wsjtx_ip",
+                "pt": "flow",
+                "to": "ip",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "wsjtx_port",
+                "pt": "flow",
+                "to": "port",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 540,
+        "y": 80,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "33f71bd2e6c60139",
+        "type": "change",
+        "z": "945e22923708a43f",
+        "name": "Get Address",
+        "rules": [
+            {
+                "t": "set",
+                "p": "ip",
+                "pt": "msg",
+                "to": "wsjtx_ip",
+                "tot": "flow"
+            },
+            {
+                "t": "set",
+                "p": "port",
+                "pt": "msg",
+                "to": "wsjtx_port",
+                "tot": "flow"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 630,
+        "y": 420,
+        "wires": [
+            [
+                "f5844091904d2c37"
+            ]
+        ]
+    },
+    {
+        "id": "5bd7457a37a238e7",
+        "type": "link in",
+        "z": "945e22923708a43f",
+        "name": "link in 1",
+        "links": [
+            "c79de1c9136e4ac1",
+            "27e1bd48e1e34035"
+        ],
+        "x": 75,
+        "y": 300,
+        "wires": [
+            [
+                "42c5fe307f4e52e5",
+                "3e82b0ac011e5546"
+            ]
+        ]
+    },
+    {
+        "id": "c79de1c9136e4ac1",
+        "type": "link out",
+        "z": "945e22923708a43f",
+        "name": "link out 1",
+        "mode": "link",
+        "links": [
+            "5bd7457a37a238e7"
+        ],
+        "x": 715,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "27e1bd48e1e34035",
+        "type": "link out",
+        "z": "945e22923708a43f",
+        "name": "link out 2",
+        "mode": "link",
+        "links": [
+            "5bd7457a37a238e7"
+        ],
+        "x": 465,
+        "y": 580,
         "wires": []
     },
     {
         "id": "f9bd40032d4a30d1",
         "type": "ui_group",
         "name": "WSJT-X Activity",
-        "tab": "11bd0a2fc83eb5fb",
-        "order": 1,
-        "disp": true,
+        "tab": "16005823a7c992fa",
+        "order": 2,
+        "disp": false,
         "width": "24",
         "collapse": false,
         "className": ""
     },
     {
-        "id": "11bd0a2fc83eb5fb",
+        "id": "16005823a7c992fa",
         "type": "ui_tab",
         "name": "WSJT-X",
         "icon": "dashboard",

@@ -1,0 +1,757 @@
+[
+    {
+        "id": "1f142a3473baf92a",
+        "type": "tab",
+        "label": "WSJT-X Encoder Sample",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "d0ccc851921a0e2b",
+        "type": "udp out",
+        "z": "1f142a3473baf92a",
+        "name": "",
+        "addr": "",
+        "iface": "",
+        "port": "",
+        "ipv": "udp4",
+        "outport": "",
+        "base64": false,
+        "multicast": "false",
+        "x": 770,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "3e46513c5dce8970",
+        "type": "change",
+        "z": "1f142a3473baf92a",
+        "name": "Save Address",
+        "rules": [
+            {
+                "t": "set",
+                "p": "wsjtx_ip",
+                "pt": "flow",
+                "to": "ip",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "wsjtx_port",
+                "pt": "flow",
+                "to": "port",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 740,
+        "y": 120,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "06e9ba538eda8950",
+        "type": "udp in",
+        "z": "1f142a3473baf92a",
+        "name": "",
+        "iface": "",
+        "port": "2237",
+        "ipv": "udp4",
+        "multicast": "true",
+        "group": "224.0.0.1",
+        "datatype": "buffer",
+        "x": 550,
+        "y": 120,
+        "wires": [
+            [
+                "3e46513c5dce8970"
+            ]
+        ]
+    },
+    {
+        "id": "b49c319af9e0d682",
+        "type": "change",
+        "z": "1f142a3473baf92a",
+        "name": "Get Address",
+        "rules": [
+            {
+                "t": "set",
+                "p": "ip",
+                "pt": "msg",
+                "to": "wsjtx_ip",
+                "tot": "flow"
+            },
+            {
+                "t": "set",
+                "p": "port",
+                "pt": "msg",
+                "to": "wsjtx_port",
+                "tot": "flow"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 590,
+        "y": 280,
+        "wires": [
+            [
+                "d0ccc851921a0e2b",
+                "3ef1271efd0ae77c",
+                "4008960df9ef5459"
+            ]
+        ]
+    },
+    {
+        "id": "48d4e9a338b448f5",
+        "type": "comment",
+        "z": "1f142a3473baf92a",
+        "name": "Save IP and Port of WSJT-X from incoming messages",
+        "info": "",
+        "x": 660,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "5f20b6c1ce365b73",
+        "type": "comment",
+        "z": "1f142a3473baf92a",
+        "name": "Use saved IP and Port to send encoded messages",
+        "info": "",
+        "x": 690,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "026c0c9eeaeb7449",
+        "type": "inject",
+        "z": "1f142a3473baf92a",
+        "name": "Heartbeat",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"type\":\"heartbeat\",\"max_schema_number\":3,\"version\":\"2.6.1\",\"revision\":\"\"}",
+        "payloadType": "json",
+        "x": 120,
+        "y": 640,
+        "wires": [
+            [
+                "be247f85d2910571"
+            ]
+        ]
+    },
+    {
+        "id": "a5a33dd9ab7dd11d",
+        "type": "inject",
+        "z": "1f142a3473baf92a",
+        "name": "Error no parameters",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"type\":\"heartbeat\"}",
+        "payloadType": "json",
+        "x": 480,
+        "y": 660,
+        "wires": [
+            [
+                "be247f85d2910571"
+            ]
+        ]
+    },
+    {
+        "id": "1aa2c45ccc02476b",
+        "type": "inject",
+        "z": "1f142a3473baf92a",
+        "name": "Error bad command",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"type\":\"hukn\"}",
+        "payloadType": "json",
+        "x": 480,
+        "y": 700,
+        "wires": [
+            [
+                "be247f85d2910571"
+            ]
+        ]
+    },
+    {
+        "id": "be247f85d2910571",
+        "type": "wsjt-x-encode",
+        "z": "1f142a3473baf92a",
+        "name": "",
+        "wsjtx_id": "NODE-RED",
+        "version": 2.6,
+        "schema": 3,
+        "x": 420,
+        "y": 280,
+        "wires": [
+            [
+                "b49c319af9e0d682"
+            ]
+        ]
+    },
+    {
+        "id": "cacdeca5f4130f3e",
+        "type": "inject",
+        "z": "1f142a3473baf92a",
+        "name": "Error junk",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "junk",
+        "payloadType": "str",
+        "x": 440,
+        "y": 740,
+        "wires": [
+            [
+                "be247f85d2910571"
+            ]
+        ]
+    },
+    {
+        "id": "2caa2284875b413b",
+        "type": "inject",
+        "z": "1f142a3473baf92a",
+        "name": "Reply",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"type\":\"reply\"}",
+        "payloadType": "json",
+        "x": 110,
+        "y": 820,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "d06dcddbb2520b14",
+        "type": "inject",
+        "z": "1f142a3473baf92a",
+        "name": "Location",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"type\":\"location\", \"location\": \"FN42\"}",
+        "payloadType": "json",
+        "x": 120,
+        "y": 760,
+        "wires": [
+            [
+                "be247f85d2910571"
+            ]
+        ]
+    },
+    {
+        "id": "8b800d57eafc5cc3",
+        "type": "inject",
+        "z": "1f142a3473baf92a",
+        "name": "Highlight Call",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"type\":\"highlight-callsign\",\"callsign\":\"N1SH\",\"foreground\":\"#FFFFFF\",\"background\":\"#FF0000\",\"highlight_last\":false}",
+        "payloadType": "json",
+        "x": 130,
+        "y": 680,
+        "wires": [
+            [
+                "be247f85d2910571"
+            ]
+        ]
+    },
+    {
+        "id": "b144dcfdda8b14c0",
+        "type": "inject",
+        "z": "1f142a3473baf92a",
+        "name": "Empty Free Text",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"type\":\"free-text\", \"text\": \"\", \"send\": true}",
+        "payloadType": "json",
+        "x": 140,
+        "y": 720,
+        "wires": [
+            [
+                "be247f85d2910571"
+            ]
+        ]
+    },
+    {
+        "id": "08343ff1b0f3d2c6",
+        "type": "ui_button",
+        "z": "1f142a3473baf92a",
+        "name": "",
+        "group": "b88013208205cb08",
+        "order": 2,
+        "width": "2",
+        "height": "1",
+        "passthru": false,
+        "label": "Clear Band",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "{\"window\":0}",
+        "payloadType": "json",
+        "topic": "clear",
+        "topicType": "str",
+        "x": 110,
+        "y": 220,
+        "wires": [
+            [
+                "be247f85d2910571"
+            ]
+        ]
+    },
+    {
+        "id": "0c65cff172530607",
+        "type": "ui_button",
+        "z": "1f142a3473baf92a",
+        "name": "",
+        "group": "b88013208205cb08",
+        "order": 3,
+        "width": "2",
+        "height": "1",
+        "passthru": false,
+        "label": "Clear Rx",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "{\"window\":1}",
+        "payloadType": "json",
+        "topic": "clear",
+        "topicType": "str",
+        "x": 100,
+        "y": 260,
+        "wires": [
+            [
+                "be247f85d2910571"
+            ]
+        ]
+    },
+    {
+        "id": "2b5c2c97e0f3aa07",
+        "type": "ui_button",
+        "z": "1f142a3473baf92a",
+        "name": "",
+        "group": "b88013208205cb08",
+        "order": 4,
+        "width": "2",
+        "height": "1",
+        "passthru": false,
+        "label": "Clear All",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "{\"window\":2}",
+        "payloadType": "json",
+        "topic": "clear",
+        "topicType": "str",
+        "x": 100,
+        "y": 300,
+        "wires": [
+            [
+                "be247f85d2910571"
+            ]
+        ]
+    },
+    {
+        "id": "2edae4b0e905ca27",
+        "type": "ui_button",
+        "z": "1f142a3473baf92a",
+        "name": "",
+        "group": "b88013208205cb08",
+        "order": 8,
+        "width": "2",
+        "height": "1",
+        "passthru": false,
+        "label": "Halt TX",
+        "tooltip": "",
+        "color": "white",
+        "bgcolor": "red",
+        "className": "",
+        "icon": "",
+        "payload": "{\"auto_tx_only\":false}",
+        "payloadType": "json",
+        "topic": "halt_tx",
+        "topicType": "str",
+        "x": 100,
+        "y": 480,
+        "wires": [
+            [
+                "be247f85d2910571"
+            ]
+        ]
+    },
+    {
+        "id": "0685567ccac2035f",
+        "type": "ui_dropdown",
+        "z": "1f142a3473baf92a",
+        "name": "Configuration",
+        "label": "",
+        "tooltip": "",
+        "place": "Configuration",
+        "group": "b88013208205cb08",
+        "order": 1,
+        "width": "3",
+        "height": "1",
+        "passthru": true,
+        "multiple": false,
+        "options": [
+            {
+                "label": "IC-705",
+                "value": "IC-705",
+                "type": "str"
+            },
+            {
+                "label": "FlexRadio",
+                "value": "Flex6600M",
+                "type": "str"
+            }
+        ],
+        "payload": "",
+        "topic": "switch-configuration",
+        "topicType": "str",
+        "className": "",
+        "x": 120,
+        "y": 160,
+        "wires": [
+            [
+                "d808b3e7bc9eb1af"
+            ]
+        ]
+    },
+    {
+        "id": "d808b3e7bc9eb1af",
+        "type": "change",
+        "z": "1f142a3473baf92a",
+        "name": "Set name",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "{\"configuration_name\": msg.payload }",
+                "tot": "jsonata"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 280,
+        "y": 160,
+        "wires": [
+            [
+                "be247f85d2910571"
+            ]
+        ]
+    },
+    {
+        "id": "1bee89560c1c9083",
+        "type": "ui_button",
+        "z": "1f142a3473baf92a",
+        "name": "",
+        "group": "b88013208205cb08",
+        "order": 9,
+        "width": "2",
+        "height": "1",
+        "passthru": false,
+        "label": "Close",
+        "tooltip": "",
+        "color": "white",
+        "bgcolor": "black",
+        "className": "",
+        "icon": "",
+        "payload": "{}",
+        "payloadType": "json",
+        "topic": "close",
+        "topicType": "str",
+        "x": 90,
+        "y": 520,
+        "wires": [
+            [
+                "be247f85d2910571"
+            ]
+        ]
+    },
+    {
+        "id": "7c09dd5b8bf74165",
+        "type": "ui_text_input",
+        "z": "1f142a3473baf92a",
+        "name": "",
+        "label": "Free Text",
+        "tooltip": "",
+        "group": "b88013208205cb08",
+        "order": 6,
+        "width": "4",
+        "height": "1",
+        "passthru": true,
+        "mode": "text",
+        "delay": 300,
+        "topic": "free_text",
+        "sendOnBlur": true,
+        "topicType": "str",
+        "x": 100,
+        "y": 380,
+        "wires": [
+            [
+                "c0425a9008019bda"
+            ]
+        ]
+    },
+    {
+        "id": "c0425a9008019bda",
+        "type": "change",
+        "z": "1f142a3473baf92a",
+        "name": "Save in flow",
+        "rules": [
+            {
+                "t": "set",
+                "p": "free_text",
+                "pt": "flow",
+                "to": "{\"text\": msg.payload, \"send\":false }",
+                "tot": "jsonata"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 250,
+        "y": 380,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "3ef1271efd0ae77c",
+        "type": "wsjt-x-decode",
+        "z": "1f142a3473baf92a",
+        "name": "",
+        "x": 600,
+        "y": 400,
+        "wires": [
+            [
+                "4008960df9ef5459"
+            ]
+        ]
+    },
+    {
+        "id": "4008960df9ef5459",
+        "type": "debug",
+        "z": "1f142a3473baf92a",
+        "name": "decoded",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 760,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "3cd28568792efb3c",
+        "type": "ui_button",
+        "z": "1f142a3473baf92a",
+        "name": "",
+        "group": "b88013208205cb08",
+        "order": 7,
+        "width": "1",
+        "height": "1",
+        "passthru": false,
+        "label": "Set",
+        "tooltip": "Set Free Text",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "free_text",
+        "payloadType": "flow",
+        "topic": "free_text",
+        "topicType": "str",
+        "x": 90,
+        "y": 420,
+        "wires": [
+            [
+                "be247f85d2910571"
+            ]
+        ]
+    },
+    {
+        "id": "1440b8f0b44fb29e",
+        "type": "ui_button",
+        "z": "1f142a3473baf92a",
+        "name": "",
+        "group": "b88013208205cb08",
+        "order": 5,
+        "width": "2",
+        "height": "1",
+        "passthru": false,
+        "label": "Replay",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "{}",
+        "payloadType": "json",
+        "topic": "replay",
+        "topicType": "str",
+        "x": 100,
+        "y": 340,
+        "wires": [
+            [
+                "be247f85d2910571"
+            ]
+        ]
+    },
+    {
+        "id": "9a5cb293cb65447d",
+        "type": "comment",
+        "z": "1f142a3473baf92a",
+        "name": "Encdode Control Messages to WSJT-X",
+        "info": "",
+        "x": 170,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "6d0639196b3ab250",
+        "type": "comment",
+        "z": "1f142a3473baf92a",
+        "name": "Simple Dashboard Interface",
+        "info": "",
+        "x": 160,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "7c96e0044cf267da",
+        "type": "comment",
+        "z": "1f142a3473baf92a",
+        "name": "Decode to debug to verify encoding (optional)",
+        "info": "",
+        "x": 700,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "6074593f6e0db8fd",
+        "type": "comment",
+        "z": "1f142a3473baf92a",
+        "name": "Some typical errors to catch",
+        "info": "",
+        "x": 480,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "69611203a6f9ceea",
+        "type": "comment",
+        "z": "1f142a3473baf92a",
+        "name": "Other encoder examples",
+        "info": "",
+        "x": 150,
+        "y": 600,
+        "wires": []
+    },
+    {
+        "id": "b88013208205cb08",
+        "type": "ui_group",
+        "name": "WSJT-X Control",
+        "tab": "16005823a7c992fa",
+        "order": 1,
+        "disp": false,
+        "width": "24",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "16005823a7c992fa",
+        "type": "ui_tab",
+        "name": "WSJT-X",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    }
+]

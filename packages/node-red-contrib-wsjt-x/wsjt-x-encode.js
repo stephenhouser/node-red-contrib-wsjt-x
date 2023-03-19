@@ -23,7 +23,6 @@ module.exports = function(RED) {
         node.wsjtx_schema = parseInt(config.schema);
 
 		node.on('input', function(msg, send, done) {
-			// we can only encode objects, not strings or numbers, or buffers...
 			if (typeof(msg.payload) != 'object') {
 				throw new Error(`Can only encode objects, ${typeof(msg.payload)} was given.`);
 			}
@@ -38,15 +37,13 @@ module.exports = function(RED) {
 				throw new Error(`No message type was given (msg.topic or msg.payload.type) cannot encode.`);
 			}
 
-			// Add WSJT-X Id from node configuration if there is not one given in the payload
+			// Use WSJT-X Id from node configuration if there is not an explicit one in the payload
 			if (!('id' in msg.payload)) {
 				msg.payload['id'] = node.wsjtx_id;
 			}
 
 			msg.input = msg.payload;
 			msg.payload = wsjtx.encode(msg.payload, node.wsjtx_version, node.wsjtx_schema);
-
-			// Send off the result without modifying the original message.
 			if (msg.payload && send) {
 				send(msg);
 			}

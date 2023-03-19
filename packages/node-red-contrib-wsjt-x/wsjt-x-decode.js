@@ -19,7 +19,6 @@ module.exports = function(RED) {
 		node.name = config.name;
 
 		node.on('input', function(msg, send, done) {
-
 			msg.input = msg.payload;
 			const decoded = wsjtx.decode(msg.payload);
 			if (decoded && send) {

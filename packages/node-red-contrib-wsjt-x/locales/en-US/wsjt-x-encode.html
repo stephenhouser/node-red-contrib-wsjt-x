@@ -1,13 +1,37 @@
 <script type="text/html" data-help-name="wsjt-x-encode">
-    <p>Encodes messages for <a href="https://www.physics.princeton.edu/pulsar/k1jt/wsjtx.html">WSJT-X</a> communication program and outputs them into the flow. This node is designed to have it's output connected to a UDP Out node which sends the messages to WSJT-X or WSJT-X clients over the local network.</p>
+    <p>Encodes messages for <a href="https://www.physics.princeton.edu/pulsar/k1jt/wsjtx.html">WSJT-X</a> 
+        communication program and outputs them into the flow. This node is designed to have it's output
+        connected to a UDP Out node which sends the messages to WSJT-X or WSJT-X clients over the local 
+        network.
+    </p>
+
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt>Id <span class="property-type">string</span></dt>
+        <dd> The WSJT-X identifier to encode. Every host in the network should have a unique Id to indetify it.
+            The <code>msg.payload.id</code> field may override this for individual messages.
+        </dd>
+        <dt>Schema <span class="property-type">number</span></dt>
+        <dd> The WSJT-X schema to encode. Typiclly <code>Latest</code> should be chosen unless a specific 
+            schema version is needed. Hosts on the WSJT-X network negotiate the schema version, which is left
+            to the outer flow in the case of this node.
+        </dd>
+        <dt>Version <span class="property-type">number</span></dt>
+        <dd> The WSJT-X version number to encode as. Typiclly <code>Latest</code> should be chosen unless a specific 
+            version is needed. There have been changes to WSJT-X network messages for each new version.
+            This option is intended to encode the parameters for a specific version when needed.
+        </dd>
+    </dl>
 
     <h3>Inputs</h3>
     <dl class="message-properties">
         <dt>payload <span class="property-type">object</span></dt>
         <dd> The object that specifies the to encode and its associated data.
-        The <code>topic</code> should be the message <code>type</code> (heartbeat, status, decode, etc.). The 
-        <code>payload</code> should contain the fields for that message <code>type</code> as appropriate. 
-        If <code>payload.type</code> is given it will be used instead of any value in <code>topic</code>.</dd>
+            The <code>topic</code> should be the message <code>type</code> (heartbeat, status, decode, etc.). The 
+            <code>payload</code> should contain the fields for that message <code>type</code> as appropriate. 
+            If <code>msg.payload.type</code> is given it will be used instead of any value in 
+            <code>topic</code>.
+        </dd>
     </dl>
 
     <h3>Outputs</h3>

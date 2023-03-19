@@ -60,7 +60,7 @@
         "type": "function",
         "z": "a59ea6503785db5d",
         "name": "Track Instances",
-        "func": "const instances = flow.get('wsjtx') || {};\n\nconst [wsjtx_id, msg_type] = msg.topic.split('/');\nif (msg_type == 'status') {\n    instances[wsjtx_id] = msg.payload\n} else if (msg_type == 'close') {\n    delete instances[wsjtx_id];\n}\n\nflow.set('wsjtx', instances);\nreturn msg;",
+        "func": "const instances = flow.get('wsjtx') || {};\n\nconst [wsjtx_id, msg_type] = msg.topic.split('/');\nif (msg_type == 'status') {\n    instances[wsjtx_id] = msg.payload;\n    instances[wsjtx_id]['address'] = {\n        ip: msg.ip,\n        port: msg.port\n    };\n} else if (msg_type == 'close') {\n    delete instances[wsjtx_id];\n}\n\nflow.set('wsjtx', instances);\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -108,7 +108,7 @@
         "type": "debug",
         "z": "a59ea6503785db5d",
         "name": "",
-        "active": true,
+        "active": false,
         "tosidebar": true,
         "console": false,
         "tostatus": false,
@@ -312,6 +312,98 @@
         "info": "",
         "x": 240,
         "y": 440,
+        "wires": []
+    },
+    {
+        "id": "a19833eed258b46d",
+        "type": "function",
+        "z": "a59ea6503785db5d",
+        "name": "Get Instance Address",
+        "func": "\n// To use: set msg.wsjtx_id = 'instance-name'\n// in your source. This will set msg.ip and msg.port\n// as needed for UDP out to the IP and Port needed to\n// communicate with the instance.\n\nif ('wsjtx_id' in msg) {\n    const wsjtx_id = msg.wsjtx_id;\n    const instances = flow.get('wsjtx') || {};\n    if (wsjtx_id in instances) {\n        const instance = instances[wsjtx_id];\n        if ('address' in instance) {\n            msg.port = instance.address.port;\n            msg.ip = instance.address.ip;\n        }\n    }        \n}\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 580,
+        "wires": [
+            [
+                "666374ebb6ece723"
+            ]
+        ]
+    },
+    {
+        "id": "60d8beafc5b05077",
+        "type": "inject",
+        "z": "a59ea6503785db5d",
+        "name": "WSJT-X & Payload",
+        "props": [
+            {
+                "p": "wsjtx_id",
+                "v": "WSJT-X",
+                "vt": "str"
+            },
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"type\":\"heartbeat\",\"max_schema_number\":3,\"version\":\"2.0.1\",\"revision\":\"\"}",
+        "payloadType": "json",
+        "x": 150,
+        "y": 580,
+        "wires": [
+            [
+                "a19833eed258b46d"
+            ]
+        ]
+    },
+    {
+        "id": "666374ebb6ece723",
+        "type": "wsjt-x-encode",
+        "z": "a59ea6503785db5d",
+        "name": "",
+        "wsjtx_id": "NODE-RED",
+        "version": 2.6,
+        "schema": 3,
+        "x": 580,
+        "y": 580,
+        "wires": [
+            [
+                "d2f3152edb49d2ed"
+            ]
+        ]
+    },
+    {
+        "id": "d2f3152edb49d2ed",
+        "type": "debug",
+        "z": "a59ea6503785db5d",
+        "name": "debug 5",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 760,
+        "y": 580,
+        "wires": []
+    },
+    {
+        "id": "202293f7f45326e4",
+        "type": "comment",
+        "z": "a59ea6503785db5d",
+        "name": "Set instance address for multi-instances of WSJT-X",
+        "info": "",
+        "x": 230,
+        "y": 540,
         "wires": []
     }
 ]
