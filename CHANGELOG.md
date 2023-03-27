@@ -17,7 +17,7 @@ message type.
 - The message sent into a decode/encode node is now *modified* by the decode/encode nodes to update
 the `payload` and other `msg` properties. In earlier versions the message was copied to avoid updating
 something that might be used elsewhere. The new version seems to fit better with the general
-NodeRed paradigm.
+Node-RED paradigm.
 
 - The `time` fields in several messages are passed through as decoded and a new `datetime_decode`
 property is synthesized to reflect the actual date and time of a message. In previous versions

@@ -64,7 +64,7 @@
         "port": "2237",
         "ipv": "udp4",
         "multicast": "true",
-        "group": "224.0.0.1",
+        "group": "239.255.0.1",
         "datatype": "buffer",
         "x": 550,
         "y": 120,

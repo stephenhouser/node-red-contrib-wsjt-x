@@ -1,4 +1,4 @@
-/* wsjt-x-encode.js - NodeRed node for encoding WSJT-X messages
+/* wsjt-x-encode.js - Node-RED node for encoding WSJT-X messages
  *
  * An out of date reference. 
  * https://github.com/roelandjansen/wsjt-x/blob/master/NetworkMessage.hpp

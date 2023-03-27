@@ -4,7 +4,7 @@
 	"workspaces": [
 		"packages/*"
 	],
-	"description": "This repository provides a [NodeRed](https://nodered.org) node to decode WSJT-X UDP notifications",
+	"description": "This repository provides a [Node-RED](https://nodered.org) node to decode WSJT-X UDP notifications",
 	"version": "0.1.0",
 	"main": "index.js",
 	"scripts": {
