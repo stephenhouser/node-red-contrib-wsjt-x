@@ -10,11 +10,11 @@ WSJT-X with.
 
 To *send* commands to WSJT-X you will need to identify the IP address and port number that WSJT-X is using to send data out. This is not the same as the address WSJT-X sends to (above). The easist method is to use a `udp in` node setup to receive data (as above) and use the `msg.ip` and `msg.port` from incoming messages. The `wsjt-x-encode` node can be used to encode messages from your flow into `buffer` objects that a `udp out` node, properly configured, can then send to WSJT-X. You will also have to configure WSJT-X to accept incoming UDP commands, look in *Settings*.
 
-## WSJT-X Encoding Work-in-progrss (v2.0)
+## WSJT-X Encoding
 
-While I have a goal of being able to encode *all* the WSJT-X messages, the priority is to complete the ones that WSJT-X accepts as input first. See the [WSJT-X Source Code](* https://github.com/roelandjansen/wsjt-x/blob/master/NetworkMessage.hpp). 
+WSJT-X accepts some commands to control its operation via the same UDP address it sends out notifications. The `wsjt-x-encode` node can encode these messages from JSON objects. This will allow you to control some aspects of WSJT-X from NodeRed. See the [WSJT-X Source Code](https://sourceforge.net/p/wsjt/wsjtx/ci/master/tree/Network/NetworkMessage.hpp) for the details of how each command works and their parameters. Set the `topic` of the message to the WSJT-X command.
 
-The commands that can be encoded are as follows:
+A summary of the commands (topics) that can be encoded are as follows:
 
 - **clear**: `{"window":2}`
 - **heartbeat**: `{"max_schema_number":3,"version":"2.6.1","revision":""}`
@@ -23,11 +23,11 @@ The commands that can be encoded are as follows:
 - **close**: `{}`
 - **replay**: `{}`
 - **free_text**: `{"text": "sample", "send": false}` (text can be `null` to change `send` only)
-- **location**: (broken?) `{"location": "FN43rq"}`
+- **location**: (does not seem to work) `{"location": "FN43rq"}`
 - **logged_adif**: `{"adif_text": "...adif XML-like stuff..."}`,
 - **switch_configuration**: `{"configuration_name":"IC-705"}`
-- **highlight_callsign**: `{"callsign": "...", "background": "#ff00ff", "foreground": "000000", "highlight_last" false}` (null for invalid color, which clears highlight)
-- **configure**: (not implemented)
+- **highlight_callsign**: `{"callsign": "...", "background": "#ff00ff", "foreground": "000000", "highlight_last" false}` (use `null` fields for invalid color, which clears highlight)
+- **configure**:
 ```
     {
         "mode":"FT8",                   // null or emptyis no change
